@@ -25,12 +25,12 @@ def set_all_seeds(seed):
     np.random.seed(seed)
 
 
-def model_params(encoder, order, seed):
+def model_params(encoder, order, seed, use_kernel=False):
     return dict(
         embedding_dim=128, sqrt_embedding_dim=128 ** 0.5,
         encoder_layer_num=(10 if encoder == "mamba" else 6),
         qkv_dim=16, head_num=8, logit_clipping=10, ff_hidden_dim=512,
-        eval_type="argmax", order_mode=order, order_seed=seed,
+        eval_type="argmax", order_mode=order, order_seed=seed, use_kernel=use_kernel,
     )
 
 
@@ -93,6 +93,9 @@ def main():
     ap.add_argument("--eval-opt", required=True)          # LKH .npy
     ap.add_argument("--eval-n", type=int, default=1000)
     ap.add_argument("--log-every", type=int, default=50)
+    ap.add_argument("--use-kernel", action="store_true", help="use mamba-ssm CUDA scan")
+    ap.add_argument("--ckpt", default=None, help="checkpoint path (default: <out>.ckpt.pt)")
+    ap.add_argument("--ckpt-every", type=int, default=2000)
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
 
@@ -110,18 +113,28 @@ def main():
 
     set_all_seeds(a.seed)
     env = Env(problem_size=100, pomo_size=100)
-    model = build_model(a.encoder, **model_params(a.encoder, a.order, a.seed))
+    model = build_model(a.encoder, **model_params(a.encoder, a.order, a.seed, a.use_kernel))
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-6)
     n_params = int(sum(p.numel() for p in model.parameters()))
+
+    # Resume from checkpoint if present (functional resume; survives walltime cuts).
+    ckpt_path = a.ckpt or (os.path.splitext(a.out)[0] + ".ckpt.pt")
+    start_step, losses = 0, []
+    if os.path.exists(ckpt_path):
+        ck = torch.load(ckpt_path, map_location=device)
+        model.load_state_dict(ck["model"])
+        optimizer.load_state_dict(ck["optim"])
+        start_step = int(ck["step"])
+        losses = list(ck.get("losses", []))
+        print(f"[resume] {ckpt_path} at step {start_step}/{a.steps}", flush=True)
 
     if use_cuda:
         torch.cuda.reset_peak_memory_stats()
 
     model.train()
-    losses = []
     t0 = time.time()
-    for step in range(1, a.steps + 1):
+    for step in range(start_step + 1, a.steps + 1):
         env.load_problems(a.batch_size)        # fresh random instances (aug=1)
         reset_state, _, _ = env.reset()
         model.pre_forward(reset_state)
@@ -139,20 +152,27 @@ def main():
         loss.backward()
         optimizer.step()
         losses.append(loss.item())
+        if step % a.ckpt_every == 0:
+            torch.save({"step": step, "model": model.state_dict(),
+                        "optim": optimizer.state_dict(), "losses": losses}, ckpt_path)
         if step % a.log_every == 0:
             recent = float(np.mean(losses[-a.log_every:]))
             max_r, _ = reward.max(dim=1)
+            ips = (step - start_step) / (time.time() - t0)
             print(f"[{a.encoder}/{a.order}] step {step}/{a.steps} "
                   f"loss {recent:.4f} train_score {(-max_r.float().mean()).item():.4f} "
-                  f"({step / (time.time() - t0):.2f} it/s)", flush=True)
+                  f"({ips:.2f} it/s)", flush=True)
     train_sec = time.time() - t0
+    steps_done = max(1, a.steps - start_step)
+    torch.save({"step": a.steps, "model": model.state_dict(),
+                "optim": optimizer.state_dict(), "losses": losses}, ckpt_path)
 
     ev = evaluate(model, env, a.eval_instances, a.eval_opt, a.eval_n)
     gpu_mem_gb = (torch.cuda.max_memory_allocated() / 1e9) if use_cuda else 0.0
     result = {
         "encoder": a.encoder, "order": a.order, "seed": a.seed, "steps": a.steps,
         "batch_size": a.batch_size, "n_params": n_params,
-        "train_sec": round(train_sec, 1), "steps_per_sec": round(a.steps / train_sec, 3),
+        "train_sec": round(train_sec, 1), "steps_per_sec": round(steps_done / train_sec, 3),
         "final_loss": float(np.mean(losses[-min(50, len(losses)):])),
         "gpu_mem_gb": round(gpu_mem_gb, 3),
         "gpu": torch.cuda.get_device_name(0) if use_cuda else "cpu",

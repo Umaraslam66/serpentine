@@ -28,12 +28,14 @@ for _p in (os.path.join(_POMO_TSP, "POMO"), _POMO_TSP):
 class MambaBlock(nn.Module):
     """Mamba-1 mixer block (pure PyTorch, sequential selective scan)."""
 
-    def __init__(self, d_model, d_state=16, d_conv=4, expand=2, dt_rank=None):
+    def __init__(self, d_model, d_state=16, d_conv=4, expand=2, dt_rank=None,
+                 use_kernel=False):
         super().__init__()
         self.d_inner = expand * d_model
         self.d_state = d_state
         self.d_conv = d_conv
         self.dt_rank = dt_rank or max(1, d_model // 16)
+        self.use_kernel = use_kernel
 
         self.in_proj = nn.Linear(d_model, self.d_inner * 2, bias=False)
         self.conv1d = nn.Conv1d(self.d_inner, self.d_inner, kernel_size=d_conv,
@@ -62,7 +64,9 @@ class MambaBlock(nn.Module):
         return self.out_proj(y)
 
     def _selective_scan(self, u, dt, A, B, C):
-        # u, dt: (b, l, d_inner); A: (d_inner, n); B, C: (b, l, n)
+        # u, dt: (b, l, d_inner); A: (d_inner, n); B, C: (b, l, n). Returns scan (no D).
+        if self.use_kernel:
+            return self._selective_scan_kernel(u, dt, A, B, C)
         b, l, d = u.shape
         dA = torch.exp(dt.unsqueeze(-1) * A)         # (b, l, d, n)
         dBu = (dt.unsqueeze(-1) * B.unsqueeze(2)) * u.unsqueeze(-1)  # (b, l, d, n)
@@ -72,6 +76,20 @@ class MambaBlock(nn.Module):
             h = dA[:, t] * h + dBu[:, t]
             ys.append(torch.einsum("bdn,bn->bd", h, C[:, t]))
         return torch.stack(ys, dim=1)                # (b, l, d)
+
+    def _selective_scan_kernel(self, u, dt, A, B, C):
+        # mamba-ssm fast CUDA scan. Kernel layout is channels-first (b, d, l);
+        # B, C are (b, n, l) (ngroups=1, shared across channels) matching the pure path.
+        from mamba_ssm.ops.selective_scan_interface import selective_scan_fn
+        y = selective_scan_fn(
+            u.transpose(1, 2).contiguous(),
+            dt.transpose(1, 2).contiguous(),
+            A,
+            B.transpose(1, 2).contiguous(),
+            C.transpose(1, 2).contiguous(),
+            D=None, z=None, delta_bias=None, delta_softplus=False,
+        )
+        return y.transpose(1, 2)                      # (b, l, d)
 
 
 class MambaEncoder(nn.Module):
@@ -88,7 +106,8 @@ class MambaEncoder(nn.Module):
         self.bits = mp.get("hilbert_bits", 7)
         self.embedding = nn.Linear(2, d)
         self.blocks = nn.ModuleList([
-            MambaBlock(d, d_state=mp.get("d_state", 16), expand=mp.get("expand", 2))
+            MambaBlock(d, d_state=mp.get("d_state", 16), expand=mp.get("expand", 2),
+                       use_kernel=mp.get("use_kernel", False))
             for _ in range(n_layers)
         ])
         self.norms = nn.ModuleList([nn.LayerNorm(d) for _ in range(n_layers)])
