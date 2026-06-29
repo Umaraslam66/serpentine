@@ -10,7 +10,7 @@
 #SBATCH --output=logs/%x-%j.out
 # Mechanism gate: mamba-ssm kernel must match the pure-PyTorch reference (<1e-3).
 set -euo pipefail
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+REPO_ROOT="${SLURM_SUBMIT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 cd "$REPO_ROOT"
 # shellcheck disable=SC1091
 source scripts/_common.sh

@@ -11,7 +11,7 @@
 # Smoke: both encoders, 1 seed, few hundred steps. Throughput + greedy gaps; exercises
 # the Hilbert/zorder/random/sort ablation. Pass --account at submit.
 set -euo pipefail
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+REPO_ROOT="${SLURM_SUBMIT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 cd "$REPO_ROOT"
 # shellcheck disable=SC1091
 source scripts/_common.sh
