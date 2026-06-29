@@ -12,9 +12,9 @@
 set -euo pipefail
 REPO_ROOT="${SLURM_SUBMIT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 cd "$REPO_ROOT"
+command -v module >/dev/null 2>&1 && module load python/3.11.7 || true
 # shellcheck disable=SC1091
 source scripts/_common.sh
-command -v module >/dev/null 2>&1 && module load python/3.11.7 || true
 
 N=${N:-10000}; SEED=${SEED:-1234}
 MODEL_PATH=${MODEL_PATH:-$POMO_ROOT/POMO/result/saved_tsp100_model2_longTrain}
