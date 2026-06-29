@@ -1,0 +1,29 @@
+{
+  "N": 10000,
+  "opt_mean_len": 7.7645554793,
+  "greedy_single_traj": {
+    "mean_len": 7.839534206151963,
+    "gap_meanratio_pct": 0.9656538233496104,
+    "gap_perinst_pct": 0.9635632059296904
+  },
+  "greedy_single_traj_start0": {
+    "mean_len": 7.8395210745334625,
+    "gap_meanratio_pct": 0.9654847007445344,
+    "gap_perinst_pct": 0.9633330546409608
+  },
+  "no_aug_multistart": {
+    "mean_len": 7.796109644365311,
+    "gap_meanratio_pct": 0.40638727032644706,
+    "gap_perinst_pct": 0.4052206482738133
+  },
+  "aug": {
+    "mean_len": 7.776144387865067,
+    "gap_meanratio_pct": 0.14925398621932207,
+    "gap_perinst_pct": 0.14849226105769978
+  },
+  "n_params": 1269760,
+  "eval_elapsed_sec": 50.373401403427124,
+  "gpu_mem_gb": 6.453531648,
+  "pomo_size": 100,
+  "aug_factor": 8
+}
