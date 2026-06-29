@@ -1,11 +1,11 @@
 #!/bin/bash
-# One-time: build the LKH-3 optimality oracle on a Leonardo LOGIN node.
-# Creates a version-independent symlink tools/lkh -> the built binary.
+# One-time: build the LKH-3 optimality oracle. Creates a version-independent
+# symlink <work>/tools/lkh -> the built binary.
 set -euo pipefail
-ROOT=/leonardo_work/AIFAC_P02_548/mamba-route
-cd "$ROOT"
-module load gcc/12.2.0
-mkdir -p tools && cd tools
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+export WORKDIR="${SERPENTINE_WORK:-$REPO_ROOT}"
+command -v module >/dev/null 2>&1 && module load gcc/12.2.0 || true
+mkdir -p "$WORKDIR/tools" && cd "$WORKDIR/tools"
 
 VERS=${LKH_VERSION:-"3.0.13 3.0.12 3.0.11 3.0.9 3.0.6"}
 got=""
@@ -26,7 +26,6 @@ if [ -z "$got" ]; then
 fi
 [ -n "$got" ] || { echo "ERROR: could not download/build any LKH version"; exit 1; }
 
-ln -sf "$ROOT/tools/LKH-$got/LKH" "$ROOT/tools/lkh"
-echo "LKH $got built -> $ROOT/tools/lkh"
-"$ROOT/tools/lkh" --version 2>/dev/null || true
-ls -la "$ROOT/tools/lkh"
+ln -sf "$WORKDIR/tools/LKH-$got/LKH" "$WORKDIR/tools/lkh"
+echo "LKH $got built -> $WORKDIR/tools/lkh"
+ls -la "$WORKDIR/tools/lkh"

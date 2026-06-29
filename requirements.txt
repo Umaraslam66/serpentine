@@ -1,0 +1,15 @@
+# Pinned for reproducibility (Gate 0).
+# Install torch first (cu121 wheel bundles the CUDA runtime; needs only the GPU driver):
+#   pip install torch==2.2.2 numpy==1.26.4
+# Then the Mamba CUDA kernel (compiles against the local CUDA toolkit; see scripts/install_mamba.sh):
+#   pip install --no-build-isolation causal-conv1d==1.4.0 mamba-ssm==2.2.2
+# transformers is pinned only because mamba-ssm's package __init__ imports symbols a newer
+# transformers dropped (we use selective_scan_fn only).
+torch==2.2.2
+numpy==1.26.4
+causal-conv1d==1.4.0
+mamba-ssm==2.2.2
+transformers==4.44.2
+# External, not on PyPI (set up by scripts/):
+#   POMO baseline  : git clone yd-kwon/POMO @ d7c3d6e   (scripts/env_setup.sh)
+#   LKH-3 oracle   : built from source                  (scripts/build_lkh.sh)

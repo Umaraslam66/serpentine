@@ -46,7 +46,8 @@ scored against the same LKH oracle. Outputs:
 - eval: `boost_usr_prod` / `boost_qos_dbg`, 1 GPU, ~minutes.
 - lkh: `lrd_all_serial` (budget-free), 8 cores.
 - gap: `lrd_all_serial`, depends `afterok` on the two above.
-- account `AIFAC_P02_548`, all under `/leonardo_work/AIFAC_P02_548/mamba-route`.
+- Slurm account and work dir are deployment-specific: `export SLURM_ACCOUNT=<alloc>` and
+  optionally `SERPENTINE_WORK=<path>` (defaults to the repo root).
 
 ## Seatbelt
 If achieved greedy gap > 1.07 % + 0.30 % abs → **STOP and report** (do not build candidate).

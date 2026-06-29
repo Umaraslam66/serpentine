@@ -9,7 +9,8 @@ Self-contained runner: `python3 test_encoders.py`.
 import numpy as np
 import torch
 
-from encoders import MambaBlock, MambaEncoder, build_model
+from serpentine.encoders.mamba import MambaBlock, MambaEncoder
+from serpentine.model import build_model
 
 MP = dict(embedding_dim=128, sqrt_embedding_dim=128 ** 0.5, encoder_layer_num=6,
           qkv_dim=16, head_num=8, logit_clipping=10, ff_hidden_dim=512,
@@ -49,7 +50,7 @@ def test_orders_all_modes_are_permutations():
 def test_build_model_swaps_encoder_keeps_decoder():
     att = build_model("attention", **MP)
     mam = build_model("mamba", **{**MP, "encoder_layer_num": 10, "order_mode": "hilbert"})
-    from TSPModel import TSP_Decoder
+    from serpentine.decoder import TSP_Decoder
     assert isinstance(att.decoder, TSP_Decoder) and isinstance(mam.decoder, TSP_Decoder)
     dp_att = sum(p.numel() for p in att.decoder.parameters())
     dp_mam = sum(p.numel() for p in mam.decoder.parameters())

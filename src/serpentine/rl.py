@@ -15,9 +15,12 @@ import time
 import numpy as np
 import torch
 
-from encoders import build_model
-import TSPEnv as tspenv_module
-from TSPEnv import TSPEnv as Env
+from serpentine.model import build_model
+from serpentine.pomo import ensure_pomo_on_path
+
+ensure_pomo_on_path()
+import TSPEnv as tspenv_module  # noqa: E402
+from TSPEnv import TSPEnv as Env  # noqa: E402
 
 
 def set_all_seeds(seed):

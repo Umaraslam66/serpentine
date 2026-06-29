@@ -1,28 +1,18 @@
 #!/usr/bin/env python3
-"""Pluggable TSP encoders: POMO attention (baseline) vs Hilbert-serialized Mamba.
+"""Hilbert-serialized Mamba encoder (the Gate-0 candidate).
 
-build_model() reuses POMO's TSPModel wholesale and swaps ONLY the encoder attribute,
-so the decoder, the POMO multi-start forward, and the RL interface are byte-identical
-between baseline and candidate. The Mamba block is a faithful pure-PyTorch Mamba-1
-(in_proj -> causal conv -> selective SSM -> gated out_proj); for Gate-0 smoke this
-avoids a CUDA-kernel compile. Ordering uses the unit-tested numpy core in hilbert.py.
+A faithful pure-PyTorch Mamba-1 block (in_proj -> causal conv -> selective SSM -> gated
+out_proj), with an optional mamba-ssm CUDA kernel for the scan (mechanism-gated against
+the pure path). The encoder embeds, serializes via the unit-tested curve ordering, runs
+the Mamba stack, then un-serializes back to original node order so the shared POMO
+decoder indexes nodes correctly. Model assembly lives in serpentine.model.build_model.
 """
-import os
-import sys
-
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from hilbert import serialize_order
-
-# Make POMO importable relative to this file (repo pinned, untouched).
-_HERE = os.path.dirname(os.path.abspath(__file__))
-_POMO_TSP = os.path.normpath(os.path.join(_HERE, "..", "POMO", "NEW_py_ver", "TSP"))
-for _p in (os.path.join(_POMO_TSP, "POMO"), _POMO_TSP):
-    if _p not in sys.path:
-        sys.path.insert(0, _p)
+from serpentine.serialization import serialize_order
 
 
 class MambaBlock(nn.Module):
@@ -134,14 +124,3 @@ class MambaEncoder(nn.Module):
             h_ser = h_ser + blk(nrm(h_ser))          # pre-norm residual
         inv_idx = inv.unsqueeze(-1).expand(-1, -1, h_ser.size(-1))
         return torch.gather(h_ser, 1, inv_idx)       # back to original node order
-
-
-def build_model(encoder="attention", **mp):
-    """POMO TSPModel with the encoder optionally swapped for Mamba. Decoder untouched."""
-    from TSPModel import TSPModel
-    model = TSPModel(**mp)
-    if encoder == "mamba":
-        model.encoder = MambaEncoder(**mp)
-    elif encoder != "attention":
-        raise ValueError(f"unknown encoder: {encoder}")
-    return model

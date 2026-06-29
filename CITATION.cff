@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it."
+title: "serpentine: space-filling-curve (Mamba) encoders for large-scale routing"
+abstract: >-
+  Gate-0 study testing whether a Hilbert-ordered Mamba (state-space) encoder can drive
+  routing decisions as well as a standard attention encoder on Euclidean TSP-100.
+authors:
+  - family-names: Aslam
+    given-names: Umar
+repository-code: "https://github.com/Umaraslam66/serpentine"
+license: MIT
+version: 0.1.0
+date-released: "2026-06-29"
+keywords:
+  - combinatorial-optimization
+  - travelling-salesman-problem
+  - state-space-models
+  - mamba
+  - space-filling-curves
+  - reinforcement-learning

@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "serpentine"
+version = "0.1.0"
+description = "Space-filling-curve (Mamba) encoders for large-scale routing — Gate 0 study"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [{ name = "Umar Aslam" }]
+# torch / mamba-ssm / causal-conv1d are pinned in requirements.txt (CUDA wheels,
+# installed separately); the package itself only needs numpy at import time.
+dependencies = ["numpy>=1.26,<2"]
+
+[project.urls]
+Repository = "https://github.com/Umaraslam66/serpentine"
+
+[tool.setuptools.packages.find]
+where = ["src"]

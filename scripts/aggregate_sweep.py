@@ -12,13 +12,16 @@ The reviewer locks the final ruling; this only scaffolds it.
 import collections
 import glob
 import json
+import os
 
 import numpy as np
+
+RESULTS = os.path.join(os.environ.get("SERPENTINE_WORK", "."), "results")
 
 
 def load():
     by = collections.defaultdict(list)
-    for f in sorted(glob.glob("results/calib_*_s*.json")):
+    for f in sorted(glob.glob(os.path.join(RESULTS, "calib_*_s*.json"))):
         d = json.load(open(f))
         order = d["order"] if d["encoder"] == "mamba" else "-"
         by[(d["encoder"], order)].append(d)

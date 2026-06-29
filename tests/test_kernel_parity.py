@@ -8,7 +8,7 @@ max abs diff < 1e-3. Mismatch -> exit 1 -> HALT (do not train). Needs a GPU.
 import torch
 import torch.nn.functional as F
 
-from encoders import MambaBlock
+from serpentine.encoders.mamba import MambaBlock
 
 TOL = 1e-3
 

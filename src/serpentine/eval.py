@@ -21,7 +21,8 @@ import torch
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--pomo-root", required=True, help=".../NEW_py_ver/TSP")
+    ap.add_argument("--pomo-root", default=None,
+                    help="POMO .../NEW_py_ver/TSP (else POMO_ROOT env or ./POMO)")
     ap.add_argument("--instances", required=True, help=".pt file (N, problem, 2)")
     ap.add_argument("--model-path", required=True, help="dir holding checkpoint-<epoch>.pt")
     ap.add_argument("--epoch", type=int, required=True)
@@ -33,8 +34,10 @@ def main():
     a = ap.parse_args()
 
     # --- make POMO importable (repo stays pristine) ---
-    sys.path.insert(0, os.path.join(a.pomo_root, "POMO"))  # TSPEnv, TSPModel
-    sys.path.insert(0, a.pomo_root)                         # TSProblemDef
+    if a.pomo_root:
+        os.environ["POMO_ROOT"] = a.pomo_root
+    from serpentine.pomo import ensure_pomo_on_path
+    ensure_pomo_on_path()
     import TSPEnv as tspenv_module
     from TSPEnv import TSPEnv as Env
     from TSPModel import TSPModel as Model

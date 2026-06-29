@@ -8,7 +8,7 @@ genuine Hilbert curve, not an accidental space-filling-ish ordering.
 """
 import numpy as np
 
-from hilbert import hilbert_index, serialize_order
+from serpentine.serialization import hilbert_index, serialize_order
 
 
 def test_xy2d_order1_canonical_sequence():
