@@ -19,7 +19,10 @@ source .venv/bin/activate
 
 N=${N:-10000}
 SEED=${SEED:-1234}
-echo "[eval] N=$N seed=$SEED host=$(hostname)"
+MODEL_PATH=${MODEL_PATH:-POMO/NEW_py_ver/TSP/POMO/result/saved_tsp100_model2_longTrain}
+EPOCH=${EPOCH:-3100}
+TAG=${TAG:-longtrain}
+echo "[eval] N=$N seed=$SEED tag=$TAG model=$MODEL_PATH epoch=$EPOCH host=$(hostname)"
 python - <<'PY'
 import torch
 print("[eval] torch", torch.__version__, "cuda_available", torch.cuda.is_available())
@@ -28,7 +31,7 @@ PY
 srun python baseline/eval_pomo.py \
   --pomo-root POMO/NEW_py_ver/TSP \
   --instances data/tsp100_test_seed${SEED}.pt \
-  --model-path POMO/NEW_py_ver/TSP/POMO/result/saved_tsp100_model2_longTrain \
-  --epoch 3100 \
+  --model-path "$MODEL_PATH" \
+  --epoch "$EPOCH" \
   --aug 8 --batch-size 500 \
-  --out results/pomo_eval_n${N}.npz
+  --out results/pomo_eval_${TAG}_n${N}.npz

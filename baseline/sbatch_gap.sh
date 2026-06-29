@@ -14,7 +14,8 @@ cd "$ROOT"
 module load python/3.11.7
 source .venv/bin/activate
 N=${N:-10000}
+TAG=${TAG:-longtrain}
 python baseline/compute_gap.py \
-  --pomo results/pomo_eval_n${N}.npz \
+  --pomo results/pomo_eval_${TAG}_n${N}.npz \
   --opt results/lkh_opt_n${N}.npy \
-  --out results/baseline_report_n${N}.json
+  --out results/baseline_report_${TAG}_n${N}.json

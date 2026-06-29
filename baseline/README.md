@@ -38,7 +38,9 @@ bash baseline/run_baseline.sh           # N=10000
 # quick smoke:
 N=128 bash baseline/run_baseline.sh
 ```
-Outputs: `results/baseline_report_n<N>.json` (gaps, wall-clock, GPU mem, #params).
+Both checkpoints (`longtrain` = epoch 3100 repo default; `standard` = epoch 2000) are
+scored against the same LKH oracle. Outputs:
+`results/baseline_report_{longtrain,standard}_n<N>.json` (gaps, wall-clock, GPU mem, #params).
 
 ## Slurm
 - eval: `boost_usr_prod` / `boost_qos_dbg`, 1 GPU, ~minutes.
