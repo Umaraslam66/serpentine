@@ -89,7 +89,13 @@ def main():
         torch.cuda.reset_peak_memory_stats()
 
     # --- run ---
-    no_aug_lens, aug_lens = [], []
+    # Four per-instance metrics from a single aug=8 pass over the identity orientation
+    # (aug slice 0) and the 100 pomo multi-starts:
+    #   st_mean  : mean over the 100 single-start greedy tours  -> "single-trajectory" (POMO 1.07%)
+    #   st0      : the single-start greedy tour from city 0      -> single-trajectory (alt estimate)
+    #   no_aug   : best over the 100 starts                      -> multi-start, no augmentation
+    #   aug      : best over 100 starts x 8 orientations         -> x8 augmentation (POMO 0.14%)
+    st_mean_lens, st0_lens, no_aug_lens, aug_lens = [], [], [], []
     cursor["i"] = 0
     done = 0
     t0 = time.time()
@@ -103,27 +109,36 @@ def main():
             while not step_done:
                 selected, _ = model(state)
                 state, reward, step_done = env.step(selected)
-            # reward: (aug*bs, pomo)
+            # reward: (aug*bs, pomo) of NEGATIVE tour lengths
             aug_reward = reward.reshape(a.aug, bs, env.pomo_size)
+            ident_len = -aug_reward[0]                  # (bs, pomo) identity-orientation lengths
+            st_mean = ident_len.mean(dim=1)            # (bs,)
+            st0 = ident_len[:, 0]                      # (bs,)
             max_pomo, _ = aug_reward.max(dim=2)        # (aug, bs)
             no_aug = -max_pomo[0, :]                   # (bs,)
             best_aug, _ = max_pomo.max(dim=0)          # (bs,)
             aug = -best_aug                            # (bs,)
+            st_mean_lens.append(st_mean.detach().cpu().numpy())
+            st0_lens.append(st0.detach().cpu().numpy())
             no_aug_lens.append(no_aug.detach().cpu().numpy())
             aug_lens.append(aug.detach().cpu().numpy())
             done += bs
     elapsed = time.time() - t0
 
+    st_mean_lens = np.concatenate(st_mean_lens)
+    st0_lens = np.concatenate(st0_lens)
     no_aug_lens = np.concatenate(no_aug_lens)
     aug_lens = np.concatenate(aug_lens)
     gpu_mem_gb = (torch.cuda.max_memory_allocated() / 1e9) if use_cuda else 0.0
 
     os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
-    np.savez(a.out, no_aug_len=no_aug_lens, aug_len=aug_lens, n_params=n_params,
+    np.savez(a.out, st_mean_len=st_mean_lens, st0_len=st0_lens,
+             no_aug_len=no_aug_lens, aug_len=aug_lens, n_params=n_params,
              elapsed_sec=elapsed, gpu_mem_gb=gpu_mem_gb, aug=a.aug, pomo_size=a.pomo_size)
 
     print(json.dumps({
         "N": int(N),
+        "single_traj_mean_len": float(st_mean_lens.mean()),
         "no_aug_mean_len": float(no_aug_lens.mean()),
         "aug_mean_len": float(aug_lens.mean()),
         "n_params": n_params,

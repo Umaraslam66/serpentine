@@ -7,8 +7,11 @@ Hilbert+Mamba comparison is meaningless.
 ## Target (reviewer-set)
 | metric | published | pass condition |
 |---|---|---|
-| greedy (POMO multi-start, no aug) | **1.07 %** | achieved greedy gap ≤ 1.07 % + **0.30 %** abs |
-| ×8 augmentation | **0.14 %** | (reported; primary gate is greedy) |
+| greedy = POMO **single-trajectory** (1 start) | **1.07 %** | achieved greedy gap ≤ 1.07 % + **0.30 %** abs |
+| ×8 augmentation (best of 100 starts × 8) | **0.14 %** | (reported; primary gate is greedy) |
+
+The run also reports POMO's multi-start no-aug gap (best of 100 starts), which is a
+distinct, stronger metric (~0.2–0.4 %) — not the 1.07 % target.
 
 ## Method (no edits to upstream POMO)
 - **Baseline repo:** `yd-kwon/POMO` (NeurIPS 2020), pinned at commit `d7c3d6e`.

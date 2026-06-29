@@ -14,12 +14,14 @@ def main():
     a = ap.parse_args()
 
     d = np.load(a.pomo)
+    st_mean = np.asarray(d["st_mean_len"], dtype=np.float64)
+    st0 = np.asarray(d["st0_len"], dtype=np.float64)
     no_aug = np.asarray(d["no_aug_len"], dtype=np.float64)
     aug = np.asarray(d["aug_len"], dtype=np.float64)
     opt = np.load(a.opt).astype(np.float64)
 
-    n = min(len(no_aug), len(aug), len(opt))
-    no_aug, aug, opt = no_aug[:n], aug[:n], opt[:n]
+    n = min(len(st_mean), len(st0), len(no_aug), len(aug), len(opt))
+    st_mean, st0, no_aug, aug, opt = st_mean[:n], st0[:n], no_aug[:n], aug[:n], opt[:n]
 
     def block(model_len):
         return {
@@ -33,7 +35,13 @@ def main():
     report = {
         "N": int(n),
         "opt_mean_len": float(opt.mean()),
-        "no_aug": block(no_aug),
+        # POMO "single trajectory" greedy (~published 1.07%); st_mean = expectation over
+        # the 100 starts, st0 = the single start from city 0.
+        "greedy_single_traj": block(st_mean),
+        "greedy_single_traj_start0": block(st0),
+        # POMO multi-start greedy, no augmentation (best of 100 starts).
+        "no_aug_multistart": block(no_aug),
+        # POMO x8 augmentation (~published 0.14%).
         "aug": block(aug),
         "n_params": int(d["n_params"]),
         "eval_elapsed_sec": float(d["elapsed_sec"]),
