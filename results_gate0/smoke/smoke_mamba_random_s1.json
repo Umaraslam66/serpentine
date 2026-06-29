@@ -1,0 +1,17 @@
+{
+  "encoder": "mamba",
+  "order": "random",
+  "seed": 1,
+  "steps": 300,
+  "batch_size": 64,
+  "n_params": 1249792,
+  "train_sec": 427.5,
+  "steps_per_sec": 0.702,
+  "final_loss": -2.098876271247864,
+  "gpu_mem_gb": 8.593,
+  "gpu": "NVIDIA A100-SXM-64GB",
+  "eval_n": 1000,
+  "opt_mean": 7.749371521,
+  "greedy_single_traj_gap_pct": 36.18495657832324,
+  "greedy_multistart_gap_pct": 22.07537603672536
+}
