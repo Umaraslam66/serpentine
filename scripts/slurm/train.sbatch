@@ -21,12 +21,14 @@ command -v gcc >/dev/null 2>&1 && \
 
 STEPS=${STEPS:?set STEPS}; SEED=${SEED:-1}; EVALN=${EVALN:-1000}
 ENC=${ENC:-attention}; ORDER=${ORDER:-hilbert}; KFLAG=${KFLAG:-}   # "--use-kernel" for mamba
+EVAL_EVERY=${EVAL_EVERY:-0}; MAX_HOURS=${MAX_HOURS:-0}             # periodic eval + wall cap
 TAG=${ENC}_${ORDER}
-echo "[train] ENC=$ENC ORDER=$ORDER KFLAG='$KFLAG' STEPS=$STEPS SEED=$SEED host=$(hostname)"
+echo "[train] ENC=$ENC ORDER=$ORDER KFLAG='$KFLAG' STEPS=$STEPS SEED=$SEED EVAL_EVERY=$EVAL_EVERY MAX_HOURS=$MAX_HOURS host=$(hostname)"
 srun python -m serpentine.rl --encoder "$ENC" --order "$ORDER" $KFLAG \
   --steps "$STEPS" --seed "$SEED" \
   --eval-instances "$WORKDIR/data/tsp100_test_seed1234.pt" \
   --eval-opt "$WORKDIR/results/lkh_opt_n10000.npy" --eval-n "$EVALN" \
   --ckpt "$WORKDIR/results/calib_${TAG}_s${SEED}.ckpt.pt" \
   --ckpt-every 2000 --log-every 200 \
+  --eval-every "$EVAL_EVERY" --max-hours "$MAX_HOURS" \
   --out "$WORKDIR/results/calib_${TAG}_s${SEED}.json"

@@ -99,6 +99,10 @@ def main():
     ap.add_argument("--use-kernel", action="store_true", help="use mamba-ssm CUDA scan")
     ap.add_argument("--ckpt", default=None, help="checkpoint path (default: <out>.ckpt.pt)")
     ap.add_argument("--ckpt-every", type=int, default=2000)
+    ap.add_argument("--eval-every", type=int, default=0,
+                    help="periodic eval interval in steps (0 = end only)")
+    ap.add_argument("--max-hours", type=float, default=0.0,
+                    help="wall-clock hard cap for this job in hours (0 = none)")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
 
@@ -136,7 +140,30 @@ def main():
         torch.cuda.reset_peak_memory_stats()
 
     model.train()
+    curve_path = os.path.splitext(a.out)[0] + ".curve.jsonl"
+
+    def run_eval():
+        ev_ = evaluate(model, env, a.eval_instances, a.eval_opt, a.eval_n)
+        model.train()  # evaluate() switched to eval(); restore for training
+        return ev_
+
+    def log_curve(step, ev_, elapsed):
+        row = {"step": int(step),
+               "single_traj_gap_pct": ev_["greedy_single_traj_gap_pct"],
+               "multistart_gap_pct": ev_["greedy_multistart_gap_pct"],
+               "elapsed_sec": round(elapsed, 1)}
+        with open(curve_path, "a") as f:
+            f.write(json.dumps(row) + "\n")
+        print(f"[curve] step {row['step']} single={row['single_traj_gap_pct']:.2f}% "
+              f"multi={row['multistart_gap_pct']:.2f}% elapsed={elapsed / 3600:.2f}h", flush=True)
+
     t0 = time.time()
+    # anchor the curve at the resume point (e.g. step 60000)
+    if a.eval_every > 0 and start_step < a.steps:
+        log_curve(start_step, run_eval(), 0.0)
+
+    capped = False
+    last_step = start_step
     for step in range(start_step + 1, a.steps + 1):
         env.load_problems(a.batch_size)        # fresh random instances (aug=1)
         reset_state, _, _ = env.reset()
@@ -155,6 +182,7 @@ def main():
         loss.backward()
         optimizer.step()
         losses.append(loss.item())
+        last_step = step
         if step % a.ckpt_every == 0:
             torch.save({"step": step, "model": model.state_dict(),
                         "optim": optimizer.state_dict(), "losses": losses}, ckpt_path)
@@ -165,18 +193,29 @@ def main():
             print(f"[{a.encoder}/{a.order}] step {step}/{a.steps} "
                   f"loss {recent:.4f} train_score {(-max_r.float().mean()).item():.4f} "
                   f"({ips:.2f} it/s)", flush=True)
+        if a.eval_every > 0 and step % a.eval_every == 0:
+            log_curve(step, run_eval(), time.time() - t0)
+        if a.max_hours > 0 and (time.time() - t0) >= a.max_hours * 3600:
+            print(f"[cap] wall-clock {a.max_hours}h reached at step {step}", flush=True)
+            capped = True
+            break
+
     train_sec = time.time() - t0
-    steps_done = max(1, a.steps - start_step)
-    torch.save({"step": a.steps, "model": model.state_dict(),
+    steps_done = max(1, last_step - start_step)
+    torch.save({"step": last_step, "model": model.state_dict(),
                 "optim": optimizer.state_dict(), "losses": losses}, ckpt_path)
 
-    ev = evaluate(model, env, a.eval_instances, a.eval_opt, a.eval_n)
+    ev = run_eval()
+    if a.eval_every > 0:
+        log_curve(last_step, ev, train_sec)
     gpu_mem_gb = (torch.cuda.max_memory_allocated() / 1e9) if use_cuda else 0.0
     result = {
-        "encoder": a.encoder, "order": a.order, "seed": a.seed, "steps": a.steps,
+        "encoder": a.encoder, "order": a.order, "seed": a.seed,
+        "steps": last_step, "target_steps": a.steps, "capped": capped,
         "batch_size": a.batch_size, "n_params": n_params,
         "train_sec": round(train_sec, 1), "steps_per_sec": round(steps_done / train_sec, 3),
-        "final_loss": float(np.mean(losses[-min(50, len(losses)):])),
+        "gpu_hours": round(train_sec / 3600, 3),
+        "final_loss": float(np.mean(losses[-min(50, len(losses)):])) if losses else 0.0,
         "gpu_mem_gb": round(gpu_mem_gb, 3),
         "gpu": torch.cuda.get_device_name(0) if use_cuda else "cpu",
         **ev,
