@@ -29,9 +29,12 @@ def set_all_seeds(seed):
 
 
 def model_params(encoder, order, seed, use_kernel=False):
+    # bimamba holds two mixers per layer, so it uses ~half the layers to keep total
+    # parameters matched to the 10-layer unidirectional mamba (a clean discriminator).
+    layers = {"mamba": 10, "bimamba": 5}.get(encoder, 6)
     return dict(
         embedding_dim=128, sqrt_embedding_dim=128 ** 0.5,
-        encoder_layer_num=(10 if encoder == "mamba" else 6),
+        encoder_layer_num=layers,
         qkv_dim=16, head_num=8, logit_clipping=10, ff_hidden_dim=512,
         eval_type="argmax", order_mode=order, order_seed=seed, use_kernel=use_kernel,
     )
@@ -87,7 +90,7 @@ def evaluate(model, env, fixed_pt, opt_npy, eval_n, batch=500):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--encoder", choices=["attention", "mamba"], required=True)
+    ap.add_argument("--encoder", choices=["attention", "mamba", "bimamba"], required=True)
     ap.add_argument("--order", choices=["hilbert", "random", "sort"], default="hilbert")
     ap.add_argument("--steps", type=int, required=True)
     ap.add_argument("--seed", type=int, default=1)

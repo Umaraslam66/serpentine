@@ -82,11 +82,45 @@ class MambaBlock(nn.Module):
         return y.transpose(1, 2)                      # (b, l, d)
 
 
+class BiMambaBlock(nn.Module):
+    """Bidirectional Mamba mixer: a forward scan + a backward scan over the SAME sequence.
+
+    Vanilla MambaBlock is strictly causal (diagnostic C measured exactly zero upstream
+    sensitivity), so each node only sees its sequence-predecessors. This block adds a
+    second mixer that runs on the reversed sequence (then re-reverses), so a node also
+    integrates its successors. The two are summed (default, parameter-clean: output stays
+    d_model) or concatenated then projected back to d_model.
+    """
+
+    def __init__(self, d_model, d_state=16, d_conv=4, expand=2, use_kernel=False,
+                 combine="sum"):
+        super().__init__()
+        self.combine = combine
+        self.fwd = MambaBlock(d_model, d_state=d_state, d_conv=d_conv, expand=expand,
+                              use_kernel=use_kernel)
+        self.bwd = MambaBlock(d_model, d_state=d_state, d_conv=d_conv, expand=expand,
+                              use_kernel=use_kernel)
+        if combine == "concat":
+            self.proj = nn.Linear(2 * d_model, d_model, bias=False)
+        elif combine != "sum":
+            raise ValueError(f"unknown combine: {combine}")
+
+    def forward(self, x):
+        # x: (B, L, d_model), already in serialization order
+        yf = self.fwd(x)
+        yb = torch.flip(self.bwd(torch.flip(x, dims=[1])), dims=[1])
+        if self.combine == "sum":
+            return yf + yb
+        return self.proj(torch.cat([yf, yb], dim=-1))
+
+
 class MambaEncoder(nn.Module):
     """Embed -> serialize (Hilbert/sort/random) -> Mamba stack -> un-serialize.
 
     Output is in ORIGINAL node order so the POMO decoder indexes nodes correctly.
     """
+
+    block_cls = MambaBlock
 
     def __init__(self, **mp):
         super().__init__()
@@ -95,13 +129,13 @@ class MambaEncoder(nn.Module):
         self.order_mode = mp.get("order_mode", "hilbert")
         self.bits = mp.get("hilbert_bits", 7)
         self.embedding = nn.Linear(2, d)
-        self.blocks = nn.ModuleList([
-            MambaBlock(d, d_state=mp.get("d_state", 16), expand=mp.get("expand", 2),
-                       use_kernel=mp.get("use_kernel", False))
-            for _ in range(n_layers)
-        ])
+        self.blocks = nn.ModuleList([self._make_block(d, mp) for _ in range(n_layers)])
         self.norms = nn.ModuleList([nn.LayerNorm(d) for _ in range(n_layers)])
         self._rng = np.random.default_rng(mp.get("order_seed", 1234))
+
+    def _make_block(self, d, mp):
+        return MambaBlock(d, d_state=mp.get("d_state", 16), expand=mp.get("expand", 2),
+                          use_kernel=mp.get("use_kernel", False))
 
     def _orders(self, data):
         pts = data.detach().cpu().numpy()
@@ -124,3 +158,17 @@ class MambaEncoder(nn.Module):
             h_ser = h_ser + blk(nrm(h_ser))          # pre-norm residual
         inv_idx = inv.unsqueeze(-1).expand(-1, -1, h_ser.size(-1))
         return torch.gather(h_ser, 1, inv_idx)       # back to original node order
+
+
+class BiMambaEncoder(MambaEncoder):
+    """MambaEncoder with bidirectional blocks (forward+backward scan per layer).
+
+    Identical serialize / un-serialize / pre-norm-residual structure as MambaEncoder, so
+    everything downstream (decoder, RL, budget) is unchanged. Use ~half the layers of the
+    unidirectional encoder to keep total parameters matched (each layer holds two mixers).
+    """
+
+    def _make_block(self, d, mp):
+        return BiMambaBlock(d, d_state=mp.get("d_state", 16), expand=mp.get("expand", 2),
+                            use_kernel=mp.get("use_kernel", False),
+                            combine=mp.get("bi_combine", "sum"))
