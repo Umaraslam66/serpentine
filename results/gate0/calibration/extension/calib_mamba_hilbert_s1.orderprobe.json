@@ -1,0 +1,19 @@
+{
+  "probe": "inference_order_sensitivity",
+  "checkpoint": "calib_mamba_hilbert_s1.ckpt.pt",
+  "trained_step": 250000,
+  "trained_order": "hilbert",
+  "eval_n": 200,
+  "use_kernel": false,
+  "device": "cpu",
+  "single_traj_gap_pct": {
+    "hilbert": 8.3764202235044,
+    "random": 56.37677085088377,
+    "sort": 33.48681769825206
+  },
+  "multistart_gap_pct": {
+    "hilbert": 4.554747846376883,
+    "random": 39.739470879067575,
+    "sort": 22.06255789205118
+  }
+}
