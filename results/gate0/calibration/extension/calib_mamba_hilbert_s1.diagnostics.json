@@ -1,0 +1,96 @@
+{
+  "mamba_step": 250000,
+  "attn_step": 250000,
+  "eval_n": 100,
+  "use_kernel": false,
+  "device": "cpu",
+  "A_directionality": {
+    "forward_baseline_pct": 8.315663205595868,
+    "forward_reimpl_pct": 8.315663205595868,
+    "reimpl_matches_baseline": true,
+    "reverse_pct": 14.961533936709316,
+    "avg_fwd_rev_pct": 9.79427471652472,
+    "delta_reverse_vs_forward": 6.6458707311134475,
+    "delta_avg_vs_forward": 1.478611510928852
+  },
+  "B_representation": {
+    "mamba": {
+      "n_vectors": 10000,
+      "d": 128,
+      "participation_ratio": 31.672752380371094,
+      "effective_rank_frac_of_d": 0.24744337797164917,
+      "mean_pairwise_cosine": 0.1164755786653876,
+      "perdim_var_mean": 1.7350374460220337,
+      "perdim_var_min": 0.7950577139854431,
+      "perdim_var_max": 3.17234468460083,
+      "dead_dims_lt_1pct_of_max": 0
+    },
+    "attention": {
+      "n_vectors": 10000,
+      "d": 128,
+      "participation_ratio": 26.022253036499023,
+      "effective_rank_frac_of_d": 0.20329885184764862,
+      "mean_pairwise_cosine": 0.1018658239181691,
+      "perdim_var_mean": 1.1209380626678467,
+      "perdim_var_min": 0.8094010353088379,
+      "perdim_var_max": 1.452392816543579,
+      "dead_dims_lt_1pct_of_max": 0
+    }
+  },
+  "C_state_decay": {
+    "eps": 0.02,
+    "n_inst": 10,
+    "source_nodes": [
+      0,
+      25,
+      50,
+      75
+    ],
+    "mean_delta_downstream": 0.05735658776610654,
+    "mean_delta_upstream": 0.0,
+    "upstream_over_downstream_ratio": 0.0,
+    "decay_curve": [
+      {
+        "sep_bin": "1-2",
+        "n": 160,
+        "mean_delta": 0.3617392403073609
+      },
+      {
+        "sep_bin": "3-5",
+        "n": 231,
+        "mean_delta": 0.1279448066471201
+      },
+      {
+        "sep_bin": "6-10",
+        "n": 359,
+        "mean_delta": 0.047937402270817324
+      },
+      {
+        "sep_bin": "11-20",
+        "n": 687,
+        "mean_delta": 0.019258632522897886
+      },
+      {
+        "sep_bin": "21-50",
+        "n": 1691,
+        "mean_delta": 0.0035667380103794268
+      },
+      {
+        "sep_bin": "51-99",
+        "n": 832,
+        "mean_delta": 0.00018895266757222264
+      }
+    ]
+  },
+  "D_curve_geometry": {
+    "k": 5,
+    "bits": 7,
+    "n_inst": 100,
+    "pairs": 50000,
+    "sep_mean": 6.86788,
+    "sep_median": 2.0,
+    "sep_p90": 17.0,
+    "sep_max": 91,
+    "frac_neighbors_gt10_apart": 0.14426
+  }
+}
