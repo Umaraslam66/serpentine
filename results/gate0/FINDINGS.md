@@ -49,17 +49,42 @@ not encoder health.
 - **Task 2 — the gap is a scaling wall.** Mean line-separation of spatial neighbours grows
   7 → 48 as N grows 100 → 5000 (fraction >10-apart 14.6% → 22.2%), while the encoder's
   receptive field is fixed (~20). Relative locality is fine; **absolute** locality outruns a
-  fixed-window scanner — so the limitation *worsens* with scale, which is where the thesis lives.
+  fixed-window scanner — so the limitation *worsens* with scale. (The scaling wall itself is
+  geometry, not our contribution; ECO already runs a Mamba backbone on large-N TSP — see §6.)
 
 ## 5. The fork this sets up (BiMamba discriminator — TODO B)
 
 Param-matched bidirectional Mamba (forward+backward scan, 5 layers = 1.2485M ≈ uni 1.2498M),
-everything else identical, trained from scratch 250k/seed-1. Reading vs the uni 8.34% / attn 2.95%:
+everything else identical, trained from scratch 250k/seed-1. The point-cloud literature (§6)
+expects bidirectionality to help **partially** — a backward scan still compresses history into a
+finite hidden state (HydraMamba) — so read the result in **three** buckets, not binary:
 
-| BiMamba @ 250k | reading | next direction |
+| BiMamba @ 250k vs uni 8.34% / attn 2.95% | reading | next direction |
 |---|---|---|
-| closes most of the ~5.4% gap | failure was **CAUSALITY** — shallow, fixable, O(N) preserved | bidirectionality is the fix |
-| barely moves | **FIXED-STATE CAPACITY** — deep | **hybrid**: Mamba locally + thin global channel over Hilbert-segment summaries (motivated by Task 1; needed more at scale by Task 2) |
+| **(a)** closes most of the ~5.4% gap | **causality-dominated** — directionality is the fix | bidirectional scan suffices (Vim/Hydra-style) |
+| **(b)** **partial** close *(literature-predicted)* | directionality helps **AND** the fixed-state wall is real | **hybrid**: bi-Mamba + thin global channel over Hilbert-segment summaries (Task 1 shows it's viable & cheap; Task 2 shows it's increasingly needed at scale) |
+| **(c)** ~no move | deep capacity limit / implementation issue | re-check wiring; reconsider SSM decision-transfer feasibility at this budget |
+
+Holding: the hybrid (and any multi-curve arm) is **not** built yet — it is the bucket-(b)/(c)
+contingency only.
+
+## 6. Related work (reviewer-supplied; we cannot reach arXiv — taken as given, NOT verified by us)
+
+**Honesty note: the diagnosis and the candidate fixes below are TABLE STAKES in the point-cloud
+Mamba literature, not contributions of this study. FINDINGS must not claim them as novel.**
+
+- The causal/short-window limitation of unidirectional Mamba vs attention's all-pairs is the
+  canonical **PointMamba** observation.
+- Known mitigations, all prior art: **bidirectional scan** (Vision Mamba, HydraMamba, Pamba);
+  **multi-curve / shuffle serialization** (Trans-Hilbert); **hybrid local-conv + global
+  aggregation** (PillarMamba). HydraMamba further notes a bidirectional scan *still* compresses
+  history into the finite hidden state and therefore adds convolution — which is why we expect
+  BiMamba to only **partially** close the gap (bucket (b) in §5).
+- **ECO (2026)** already applies a Mamba backbone to TSP/CVRP at large N. The open question this
+  study owns is **decision-transfer under RL** (POMO REINFORCE) — whether a Hilbert+Mamba encoder
+  yields routing *decisions* as good as attention, which the point-cloud papers do not test. Any
+  claim we make is about RL routing-decision quality, **not** about Mamba-for-points, the scaling
+  wall, or these fixes being new.
 
 ---
 
@@ -71,6 +96,7 @@ everything else identical, trained from scratch 250k/seed-1. Reading vs the uni 
       mamba/hilbert seeds 2–3 @ 250k (jobs queued behind GPU maintenance). Formalizes the
       KILL: PASS = hilbert ≤ attn+1.0% across ≥3 seeds; KILL = worse by >1.0% AND hilbert
       clearly beats random. (Inference proxy already shows hilbert ≪ sort ≪ random.)
-- [ ] If BiMamba lands in "capacity" branch: prototype + measure the hybrid thin-global-channel.
+- [ ] Only if BiMamba lands in bucket (b)/(c): prototype + measure the hybrid thin-global-channel.
+      NOT started — no hybrid or multi-curve arm exists yet (held by reviewer).
 
 *Sources: `calibration/extension/{EXTENSION,ORDER_PROBE,DIAGNOSTICS,BIMAMBA}.md`, `GEOMETRY.md`.*
