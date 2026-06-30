@@ -22,9 +22,11 @@ command -v gcc >/dev/null 2>&1 && \
 STEPS=${STEPS:?set STEPS}; SEED=${SEED:-1}; EVALN=${EVALN:-1000}
 ENC=${ENC:-attention}; ORDER=${ORDER:-hilbert}; KFLAG=${KFLAG:-}   # "--use-kernel" for mamba
 EVAL_EVERY=${EVAL_EVERY:-0}; MAX_HOURS=${MAX_HOURS:-0}             # periodic eval + wall cap
-TAG=${ENC}_${ORDER}
-echo "[train] ENC=$ENC ORDER=$ORDER KFLAG='$KFLAG' STEPS=$STEPS SEED=$SEED EVAL_EVERY=$EVAL_EVERY MAX_HOURS=$MAX_HOURS host=$(hostname)"
+GLOBAL=${GLOBAL:-none}                                             # none|mean|segment global channel
+TAG=${ENC}_${ORDER}; [ "$GLOBAL" != "none" ] && TAG=${TAG}_${GLOBAL}
+echo "[train] ENC=$ENC ORDER=$ORDER KFLAG='$KFLAG' GLOBAL=$GLOBAL STEPS=$STEPS SEED=$SEED EVAL_EVERY=$EVAL_EVERY MAX_HOURS=$MAX_HOURS host=$(hostname)"
 srun python -m serpentine.rl --encoder "$ENC" --order "$ORDER" $KFLAG \
+  --global-channel "$GLOBAL" \
   --steps "$STEPS" --seed "$SEED" \
   --eval-instances "$WORKDIR/data/tsp100_test_seed1234.pt" \
   --eval-opt "$WORKDIR/results/lkh_opt_n10000.npy" --eval-n "$EVALN" \

@@ -114,10 +114,72 @@ class BiMambaBlock(nn.Module):
         return self.proj(torch.cat([yf, yb], dim=-1))
 
 
-class MambaEncoder(nn.Module):
-    """Embed -> serialize (Hilbert/sort/random) -> Mamba stack -> un-serialize.
+class MeanPoolGlobal(nn.Module):
+    """ECO-style global channel: a single graph-mean vector, projected, broadcast to all nodes.
 
-    Output is in ORIGINAL node order so the POMO decoder indexes nodes correctly.
+    Cheapest global mechanism (one pooled vector for the whole graph). A uniform per-node add
+    only reaches the routing decision through the decoder's query path (it cancels in the
+    node-selection softmax otherwise) — i.e. it can modulate the shared context but not
+    differentiate nodes. signature matches SegmentGlobal so the encoder calls them uniformly.
+    """
+
+    def __init__(self, d):
+        super().__init__()
+        self.proj = nn.Linear(d, d)
+
+    def forward(self, H, order, inv):           # order/inv unused (global mean)
+        g = self.proj(H.mean(dim=1, keepdim=True))      # (B,1,d)
+        return g.expand(-1, H.size(1), -1)              # (B,P,d)
+
+
+class SegmentGlobal(nn.Module):
+    """Structured global channel (the contribution): chunk the Hilbert line into S contiguous
+    segments, mean-pool each, run cheap full attention (O(S^2)) over the S summaries, then
+    scatter each summary back to the nodes of its segment.
+
+    Unlike mean-pool this is PER-NODE, so it repairs the ~14% of spatial neighbours the Hilbert
+    curve scatters >10 positions apart (Task-1 geometry): two physically-adjacent nodes in
+    different segments can now exchange information in one segment-attention hop. The pooled
+    summary is coarse (necessary, not proven sufficient — that is what the RL run tests).
+    """
+
+    def __init__(self, d, n_segments=10, attn_dim=64):
+        super().__init__()
+        self.S = n_segments
+        self.scale = attn_dim ** -0.5
+        self.q = nn.Linear(d, attn_dim, bias=False)
+        self.k = nn.Linear(d, attn_dim, bias=False)
+        self.v = nn.Linear(d, attn_dim, bias=False)
+        self.o = nn.Linear(attn_dim, d, bias=False)
+
+    def _node_segment(self, order, inv):
+        P = inv.size(1)
+        return (inv * self.S) // P                       # (B,P) node -> segment 0..S-1
+
+    def _pool(self, H, order):
+        B, P, d = H.shape
+        H_seq = torch.gather(H, 1, order.unsqueeze(-1).expand(-1, -1, d))  # Hilbert order
+        return H_seq.view(B, self.S, P // self.S, d).mean(dim=2)           # (B,S,d)
+
+    def _attn(self, seg):
+        scores = (self.q(seg) @ self.k(seg).transpose(1, 2)) * self.scale  # (B,S,S)
+        return self.o(torch.softmax(scores, dim=-1) @ self.v(seg))         # (B,S,d)
+
+    def _scatter(self, seg_ctx, node_seg):
+        idx = node_seg.unsqueeze(-1).expand(-1, -1, seg_ctx.size(-1))
+        return torch.gather(seg_ctx, 1, idx)             # (B,P,d) each node <- its segment ctx
+
+    def forward(self, H, order, inv):
+        seg_ctx = self._attn(self._pool(H, order))
+        return self._scatter(seg_ctx, self._node_segment(order, inv))
+
+
+class MambaEncoder(nn.Module):
+    """Embed -> serialize (Hilbert/sort/random) -> Mamba stack -> un-serialize -> (+global channel).
+
+    Output is in ORIGINAL node order so the POMO decoder indexes nodes correctly. An optional
+    global channel (global_mode = none|mean|segment) adds a per-node global contribution to the
+    un-serialized embeddings; the decoder is untouched, so 0/A/B differ ONLY in this channel.
     """
 
     block_cls = MambaBlock
@@ -131,11 +193,23 @@ class MambaEncoder(nn.Module):
         self.embedding = nn.Linear(2, d)
         self.blocks = nn.ModuleList([self._make_block(d, mp) for _ in range(n_layers)])
         self.norms = nn.ModuleList([nn.LayerNorm(d) for _ in range(n_layers)])
+        self.global_channel = self._make_global(d, mp)
         self._rng = np.random.default_rng(mp.get("order_seed", 1234))
 
     def _make_block(self, d, mp):
         return MambaBlock(d, d_state=mp.get("d_state", 16), expand=mp.get("expand", 2),
                           use_kernel=mp.get("use_kernel", False))
+
+    def _make_global(self, d, mp):
+        mode = mp.get("global_mode", "none")
+        if mode == "none":
+            return None
+        if mode == "mean":
+            return MeanPoolGlobal(d)
+        if mode == "segment":
+            return SegmentGlobal(d, n_segments=mp.get("n_segments", 10),
+                                 attn_dim=mp.get("global_attn_dim", 64))
+        raise ValueError(f"unknown global_mode: {mode}")
 
     def _orders(self, data):
         pts = data.detach().cpu().numpy()
@@ -157,7 +231,10 @@ class MambaEncoder(nn.Module):
         for blk, nrm in zip(self.blocks, self.norms):
             h_ser = h_ser + blk(nrm(h_ser))          # pre-norm residual
         inv_idx = inv.unsqueeze(-1).expand(-1, -1, h_ser.size(-1))
-        return torch.gather(h_ser, 1, inv_idx)       # back to original node order
+        H = torch.gather(h_ser, 1, inv_idx)          # back to original node order
+        if self.global_channel is not None:
+            H = H + self.global_channel(H, order, inv)
+        return H
 
 
 class BiMambaEncoder(MambaEncoder):
