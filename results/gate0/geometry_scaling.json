@@ -1,0 +1,100 @@
+{
+  "task1_segment_reconnect": [
+    {
+      "S": 10,
+      "segment_size": 10,
+      "thresh": 10,
+      "all_knn_pairs": 50000,
+      "scattered_pairs": 7213,
+      "frac_scattered": 0.14426,
+      "scattered_in_different_segment_frac": 1.0,
+      "segdiff_mean": 3.096353805628726,
+      "segdiff_median": 2.0,
+      "segdiff_p90": 8.0,
+      "segdiff_max": 9,
+      "frac_segdiff_eq1": 0.2688201857756828,
+      "frac_segdiff_le2": 0.6115347289615971,
+      "frac_segdiff_le3": 0.7471232496880632
+    },
+    {
+      "S": 20,
+      "segment_size": 5,
+      "thresh": 10,
+      "all_knn_pairs": 50000,
+      "scattered_pairs": 7213,
+      "frac_scattered": 0.14426,
+      "scattered_in_different_segment_frac": 1.0,
+      "segdiff_mean": 6.274504367114932,
+      "segdiff_median": 4.0,
+      "segdiff_p90": 15.0,
+      "segdiff_max": 18,
+      "frac_segdiff_eq1": 0.0,
+      "frac_segdiff_le2": 0.11409954249272147,
+      "frac_segdiff_le3": 0.34936919450991266
+    }
+  ],
+  "task2_scaling_wall": [
+    {
+      "label": "N=100 real bits=7 (probe-D anchor)",
+      "N": 100,
+      "bits": 7,
+      "instances": 100,
+      "pairs": 50000,
+      "frac_gt10": 0.14426,
+      "frac_gt_Nover10": 0.14426,
+      "sep_median": 2.0,
+      "sep_mean": 6.86788,
+      "sep_p90": 17.0
+    },
+    {
+      "label": "N=100 uniform bits=10",
+      "N": 100,
+      "bits": 10,
+      "instances": 100,
+      "pairs": 50000,
+      "frac_gt10": 0.14574,
+      "frac_gt_Nover10": 0.14574,
+      "sep_median": 2.0,
+      "sep_mean": 7.0436,
+      "sep_p90": 17.0
+    },
+    {
+      "label": "N=500 uniform bits=10",
+      "N": 500,
+      "bits": 10,
+      "instances": 50,
+      "pairs": 125000,
+      "frac_gt10": 0.189488,
+      "frac_gt_Nover10": 0.060168,
+      "sep_median": 3.0,
+      "sep_mean": 15.290624,
+      "sep_p90": 28.0
+    },
+    {
+      "label": "N=1000 uniform bits=10",
+      "N": 1000,
+      "bits": 10,
+      "instances": 20,
+      "pairs": 100000,
+      "frac_gt10": 0.20701,
+      "frac_gt_Nover10": 0.04224,
+      "sep_median": 3.0,
+      "sep_mean": 21.21581,
+      "sep_p90": 37.0
+    },
+    {
+      "label": "N=5000 uniform bits=10",
+      "N": 5000,
+      "bits": 10,
+      "instances": 5,
+      "pairs": 125000,
+      "frac_gt10": 0.222176,
+      "frac_gt_Nover10": 0.01972,
+      "sep_median": 3.0,
+      "sep_mean": 48.45852,
+      "sep_p90": 51.0
+    }
+  ],
+  "k": 5,
+  "thresh": 10
+}
