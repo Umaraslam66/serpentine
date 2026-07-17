@@ -111,8 +111,9 @@ Mamba literature, not contributions of this study. FINDINGS must not claim them 
 
 ## TODO — pending numbers (do not treat conclusions as final until filled)
 
-- [ ] **(B) BiMamba seed-1 @ 250k** single-traj/multi-start curve — staged
-      (`scripts/run_bimamba.sh`), runs on next GPU window. Decides the §5 fork.
+- [ ] **(B) BiMamba seed-1 @ 250k** — RUNNING since 2026-07-17 21:27 (job 49636355,
+      24h wall, GPU-smoked first). Decides the §5 fork. Collect via
+      `scripts/collect_results.sh`.
 - [x] **(C) Formal ablation** — mamba/random + mamba/sort seed-1 @250k COMPLETE
       (2026-07-01): **random 6.40% < sort 7.12% < hilbert 8.34%** — rule resolves
       inverted; Hilbert-locality premise refuted (§4b, `ablation/ABLATION.md`).

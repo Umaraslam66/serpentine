@@ -1,7 +1,12 @@
 # Staged experiment: structured vs mean-pool global channel under RL
 
-**Status: PREPARED, NOT LAUNCHED.** Staged behind tonight's confirmatory runs (BiMamba +
-formal ablation). One controlled experiment; **only the encoder global channel changes**,
+**Status: LAUNCHED 2026-07-17** — jobs 49636372 (A/mean) + 49636373 (B/segment), after
+GPU smokes (49636341/49636354, param counts match the table below exactly). NOTE the
+intervening ablation result (`ablation/ABLATION.md`): trained-from-scratch random order
+(6.40%) beats hilbert (8.34%), so the "repairs the scattered Hilbert neighbours" story in
+this doc is under pressure — read any Variant-B win against the 6.40% random arm too, not
+only the 8.34% hilbert baseline. One controlled experiment; **only the encoder global
+channel changes**,
 everything else identical to the mamba/hilbert baseline (POMO-RL, 250k, seed 1, Hilbert,
 same POMO decoder/budget, mamba-ssm kernel, single-traj+multistart eval every 20k).
 

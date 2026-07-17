@@ -1,0 +1,12 @@
+# Launch wave 2026-07-17 ~21:25-21:31 CEST, account AIFAC_P02_548, boost_usr_prod.
+# All paths GPU-smoked first on boost_qos_dbg (49636340 bimamba, 49636341 gc-mean,
+# 49636354 gc-segment — all COMPLETED 0:0, param counts matched staged tables).
+# Collect with: bash scripts/collect_results.sh
+bimamba_s1=49636355     # ENC=bimamba ORDER=hilbert, 24h wall (smoke it/s low; resumable)
+hilbert_s2=49636356
+hilbert_s3=49636357
+random_s2=49636358
+random_s3=49636359
+gc_mean_s1=49636372     # GLOBAL=mean    (Variant A, 1,266,304 params)
+gc_segment_s1=49636373  # GLOBAL=segment (Variant B, 1,282,560 params)
+# Expected ~14h each (vanilla path ran 13.8h); bimamba possibly up to ~20h.
