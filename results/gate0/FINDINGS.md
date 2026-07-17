@@ -89,23 +89,32 @@ finite hidden state (HydraMamba) — so read the result in **three** buckets, no
 Holding: the hybrid (and any multi-curve arm) is **not** built yet — it is the bucket-(b)/(c)
 contingency only.
 
-## 6. Related work (reviewer-supplied; we cannot reach arXiv — taken as given, NOT verified by us)
+## 6. Related work (web-verified 2026-07-17 with arXiv IDs; originally reviewer-supplied)
 
 **Honesty note: the diagnosis and the candidate fixes below are TABLE STAKES in the point-cloud
 Mamba literature, not contributions of this study. FINDINGS must not claim them as novel.**
 
 - The causal/short-window limitation of unidirectional Mamba vs attention's all-pairs is the
-  canonical **PointMamba** observation.
-- Known mitigations, all prior art: **bidirectional scan** (Vision Mamba, HydraMamba, Pamba);
-  **multi-curve / shuffle serialization** (Trans-Hilbert); **hybrid local-conv + global
-  aggregation** (PillarMamba). HydraMamba further notes a bidirectional scan *still* compresses
+  canonical **PointMamba** (2402.10739, NeurIPS 2024) observation.
+- Known mitigations, all prior art: **bidirectional scan** (Vision Mamba 2401.09417, HydraMamba
+  2507.19778, Pamba 2406.17442); **multi-curve / shuffle serialization** (e.g. PTv3's
+  Hilbert+Trans-Hilbert shuffle, 2312.10035); **hybrid local + global aggregation**
+  (PillarMamba 2505.05397). HydraMamba further notes a bidirectional scan *still* compresses
   history into the finite hidden state and therefore adds convolution — which is why we expect
   BiMamba to only **partially** close the gap (bucket (b) in §5).
-- **ECO (2026)** already applies a Mamba backbone to TSP/CVRP at large N. The open question this
-  study owns is **decision-transfer under RL** (POMO REINFORCE) — whether a Hilbert+Mamba encoder
-  yields routing *decisions* as good as attention, which the point-cloud papers do not test. Any
-  claim we make is about RL routing-decision quality, **not** about Mamba-for-points, the scaling
-  wall, or these fixes being new.
+- **ECO (2602.20730, 2026)** applies a Mamba encoder-decoder to TSP/CVRP, trained via SFT +
+  iterative DPO (not policy-gradient RL); it targets large instances (smallest TSP tested is
+  N=200, where it beats POMO at every tested size, with margin growing in N) and never tests
+  N=100. The open question this study owns is **decision-transfer under RL** (POMO REINFORCE).
+- **Positioning of the §4b inversion (fact-checked):** the published serialization ablations
+  point the OTHER way in supervised point clouds — PointMamba reports Hilbert/Trans-Hilbert
+  *beating* random by +1.20/+1.73% on ScanObjectNN; Point Cloud Mamba (2403.00762, AAAI 2025)
+  reports simple ≈ curve orders (neutral). No paper found reporting random > space-filling for
+  Mamba/SSM in any domain, and no Mamba-NCO work occupies the matched-budget POMO-RL N=100
+  cell. So the *strong* claim ("locality prior actively hurts under RL") appears novel; the
+  *weak* claim ("locality not essential") is partially anticipated by PCM — cite it to preempt.
+  Any claim we make is about RL routing-decision quality, **not** about Mamba-for-points, the
+  scaling wall, or these fixes being new.
 
 ---
 
