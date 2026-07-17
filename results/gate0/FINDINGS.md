@@ -1,10 +1,11 @@
 # Gate 0 — Findings (mechanistic story so far)
 
 **Question:** can a Hilbert-ordered Mamba encoder drive routing decisions as well as a
-standard attention encoder on Euclidean TSP-100? **Provisional answer: NO for the
-encoder-swap as specified** (vanilla causal Mamba, single Hilbert curve). This document is
-the running synthesis; the BiMamba result (tonight) and the formal ablation slot into the
-clearly-marked TODOs below.
+standard attention encoder on Euclidean TSP-100? **Answer so far: NO for the
+encoder-swap as specified** (vanilla causal Mamba, single Hilbert curve) — and the formal
+ablation (§4b) shows the Hilbert serialization itself is counterproductive: random
+ordering trains better. This document is the running synthesis; the BiMamba and
+global-channel results slot into the clearly-marked TODOs below.
 
 ## 1. Provisional KILL (seed-1, 250k steps, single-traj greedy vs LKH)
 
@@ -52,6 +53,26 @@ not encoder health.
   fixed-window scanner — so the limitation *worsens* with scale. (The scaling wall itself is
   geometry, not our contribution; ECO already runs a Mamba backbone on large-N TSP — see §6.)
 
+## 4b. Formal ablation (ran 2026-07-01, retrieved 2026-07-17): the ordering hierarchy INVERTS
+
+From-scratch mamba/random and mamba/sort (seed 1, 250k, identical everything else):
+**random 6.40% < sort 7.12% < hilbert 8.34%** single-traj — and random beats hilbert at
+*every* 20k eval, whole-curve (see `ablation/ABLATION.md`). The pre-registered KILL rule
+("worse than attention by >1.0% AND hilbert clearly beats random") resolves in the
+unanticipated direction: the second clause fails **inverted**. Consequences:
+
+- The KILL broadens: every vanilla-Mamba ordering loses to attention (2.95%) under RL;
+  the best is now *random* at 6.40% (gap 3.5% abs, not 5.4%).
+- **The Hilbert-locality premise is refuted, not merely unproven** — spatial-locality
+  serialization *hurts* training. Random ordering (fresh permutation per instance) acts as
+  an invariance regularizer, forcing order-robust global features; locality is a crutch
+  the short causal window overfits.
+- No contradiction with §2's order probe: that shows inference-time dependence of a
+  hilbert-*trained* model on its training order, not which order trains better.
+- Single seed; hilbert/random seeds 2–3 queued 2026-07-17 to bound variance. §5's fork
+  and the global-channel design read against the 8.34% hilbert baseline; interpretation of
+  any global-channel win must now also be checked against the 6.40% random arm.
+
 ## 5. The fork this sets up (BiMamba discriminator — TODO B)
 
 Param-matched bidirectional Mamba (forward+backward scan, 5 layers = 1.2485M ≈ uni 1.2498M),
@@ -92,10 +113,10 @@ Mamba literature, not contributions of this study. FINDINGS must not claim them 
 
 - [ ] **(B) BiMamba seed-1 @ 250k** single-traj/multi-start curve — staged
       (`scripts/run_bimamba.sh`), runs on next GPU window. Decides the §5 fork.
-- [ ] **(C) Formal ablation** — from-scratch mamba/random + mamba/sort (seed 1) and
-      mamba/hilbert seeds 2–3 @ 250k (jobs queued behind GPU maintenance). Formalizes the
-      KILL: PASS = hilbert ≤ attn+1.0% across ≥3 seeds; KILL = worse by >1.0% AND hilbert
-      clearly beats random. (Inference proxy already shows hilbert ≪ sort ≪ random.)
+- [x] **(C) Formal ablation** — mamba/random + mamba/sort seed-1 @250k COMPLETE
+      (2026-07-01): **random 6.40% < sort 7.12% < hilbert 8.34%** — rule resolves
+      inverted; Hilbert-locality premise refuted (§4b, `ablation/ABLATION.md`).
+      Remaining: hilbert + random seeds 2–3 (queued 2026-07-17) to bound seed variance.
 - [ ] Only if BiMamba lands in bucket (b)/(c): prototype + measure the hybrid thin-global-channel.
       NOT started — no hybrid or multi-curve arm exists yet (held by reviewer).
 

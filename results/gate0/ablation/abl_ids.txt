@@ -1,0 +1,5 @@
+# seed-1 ablation (mamba/random, mamba/sort) to 250k, eval every 20k, --time=20h MAX_HOURS=0
+random=48132839
+sort=48132840
+# submitted 2026-06-30 ~11:58; BLOCKED by maint_3006_boost reservation (whole boost partition)
+# maintenance window 2026-06-30T07:00 -> 2026-07-01T07:00; jobs auto-start after it clears
