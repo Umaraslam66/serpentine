@@ -25,7 +25,7 @@ echo "== this wave (sacct) =="
 ssh -o BatchMode=yes "$REMOTE" 'sacct -u $USER -S 2026-07-17 -X --format=JobID,JobName%20,State,Elapsed,ExitCode' | grep -E 'serp|JobID|----' || true
 
 echo "== fetching finished artifacts =="
-TAGS="bimamba_hilbert_s1 mamba_hilbert_s2 mamba_hilbert_s3 mamba_random_s2 mamba_random_s3 mamba_hilbert_mean_s1 mamba_hilbert_segment_s1 bimamba_hilbert_s2 bimamba_hilbert_s3 bimamba_random_s1"
+TAGS="bimamba_hilbert_s1 mamba_hilbert_s2 mamba_hilbert_s3 mamba_random_s2 mamba_random_s3 mamba_hilbert_mean_s1 mamba_hilbert_segment_s1 bimamba_hilbert_s2 bimamba_hilbert_s3 bimamba_random_s1 hybrid_hilbert_s1 attention_hilbert_s1"
 for t in $TAGS; do
   for ext in json curve.jsonl; do
     f="calib_${t}.${ext}"
