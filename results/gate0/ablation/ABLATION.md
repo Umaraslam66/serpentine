@@ -1,5 +1,13 @@
 # Gate 0 — Formal ordering ablation (seed 1, 250k steps)
 
+> **SEED UPDATE 2026-07-18 — the §1 inversion is NOT seed-robust.** Seeds 2–3
+> (`../incoming/WAVE_ANALYSIS.md`): hilbert 6.36/7.81, random 6.84/7.45 — hilbert s2 beats
+> every random seed. 3-seed means: random 6.90 ± 0.53, hilbert 7.50 ± 1.03. The supported
+> claim is the weak form — **Hilbert confers no benefit and doubles seed variance** — not
+> "random beats hilbert whole-curve", which was a seed-1 artifact. §2's invariance-
+> regularizer reading survives only as an interpretation of the variance gap. Read §§1–3
+> below with this correction in mind.
+
 **Jobs:** `serp-abl-rand` 48132839, `serp-abl-sort` 48132840 (Leonardo, A100). Submitted
 2026-06-30, held by the `maint_3006_boost` reservation, auto-started 18:56, completed
 2026-07-01 08:44/08:45 (~13.8 h each, 5.03–5.04 it/s). Results retrieved 2026-07-17

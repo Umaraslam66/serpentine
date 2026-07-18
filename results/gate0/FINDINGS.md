@@ -69,9 +69,12 @@ unanticipated direction: the second clause fails **inverted**. Consequences:
   the short causal window overfits.
 - No contradiction with §2's order probe: that shows inference-time dependence of a
   hilbert-*trained* model on its training order, not which order trains better.
-- Single seed; hilbert/random seeds 2–3 queued 2026-07-17 to bound variance. §5's fork
-  and the global-channel design read against the 8.34% hilbert baseline; interpretation of
-  any global-channel win must now also be checked against the 6.40% random arm.
+- **SEED UPDATE 2026-07-18:** seeds 2–3 do NOT confirm the strict inversion — hilbert
+  spans 6.36–8.34 (mean 7.50 ± 1.03), random 6.40–7.45 (mean 6.90 ± 0.53), ranges overlap.
+  Supported claim downgraded to: **Hilbert confers no benefit over random and doubles seed
+  variance.** The §5 fork resolved to bucket (b) with BiMamba at 5.55/1.89 (multistart
+  parity with attention, seed-1); both global-channel variants refuted. Full scoring:
+  `incoming/WAVE_ANALYSIS.md`.
 
 ## 5. The fork this sets up (BiMamba discriminator — TODO B)
 
@@ -120,9 +123,14 @@ Mamba literature, not contributions of this study. FINDINGS must not claim them 
 
 ## TODO — pending numbers (do not treat conclusions as final until filled)
 
-- [ ] **(B) BiMamba seed-1 @ 250k** — RUNNING since 2026-07-17 21:27 (job 49636355,
-      24h wall, GPU-smoked first). Decides the §5 fork. Collect via
-      `scripts/collect_results.sh`.
+- [x] **(B) BiMamba seed-1 @ 250k** — DONE 2026-07-18 (job 49636355): single-traj
+      **5.55%** (52% of the gap closed → **bucket (b)**), multistart **1.89% ≈ attention
+      1.91%** (parity, unregistered outcome). See `incoming/WAVE_ANALYSIS.md` §2.
+- [x] **Global-channel A/B @ 250k** — DONE 2026-07-18: mean 7.86 (within hilbert seed
+      noise), segment 8.38 (= baseline). **Both refuted under RL**; line closed, Phase 2
+      moot. See `incoming/WAVE_ANALYSIS.md` §3.
+- [ ] **BiMamba seeds 2–3 + BiMamba/random compose run** — the two surviving effects;
+      decides whether multistart parity is a stateable finding.
 - [x] **(C) Formal ablation** — mamba/random + mamba/sort seed-1 @250k COMPLETE
       (2026-07-01): **random 6.40% < sort 7.12% < hilbert 8.34%** — rule resolves
       inverted; Hilbert-locality premise refuted (§4b, `ablation/ABLATION.md`).
