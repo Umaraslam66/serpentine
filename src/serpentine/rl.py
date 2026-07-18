@@ -31,7 +31,9 @@ def set_all_seeds(seed):
 def model_params(encoder, order, seed, use_kernel=False, global_mode="none"):
     # bimamba holds two mixers per layer, so it uses ~half the layers to keep total
     # parameters matched to the 10-layer unidirectional mamba (a clean discriminator).
-    layers = {"mamba": 10, "bimamba": 5}.get(encoder, 6)
+    # hybrid trades one bimamba layer for a (cheaper) attention layer, so N_BI=4 keeps
+    # the total inside the same +/-5% budget.
+    layers = {"mamba": 10, "bimamba": 5, "hybrid": 4}.get(encoder, 6)
     return dict(
         embedding_dim=128, sqrt_embedding_dim=128 ** 0.5,
         encoder_layer_num=layers,
@@ -91,7 +93,7 @@ def evaluate(model, env, fixed_pt, opt_npy, eval_n, batch=500):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--encoder", choices=["attention", "mamba", "bimamba"], required=True)
+    ap.add_argument("--encoder", choices=["attention", "mamba", "bimamba", "hybrid"], required=True)
     ap.add_argument("--order", choices=["hilbert", "random", "sort"], default="hilbert")
     ap.add_argument("--global-channel", choices=["none", "mean", "segment"], default="none",
                     help="encoder global channel: none | mean-pool (ECO-style) | segment-attention")

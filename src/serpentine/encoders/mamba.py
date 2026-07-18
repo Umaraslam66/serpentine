@@ -249,3 +249,48 @@ class BiMambaEncoder(MambaEncoder):
         return BiMambaBlock(d, d_state=mp.get("d_state", 16), expand=mp.get("expand", 2),
                             use_kernel=mp.get("use_kernel", False),
                             combine=mp.get("bi_combine", "sum"))
+
+
+class HybridEncoder(BiMambaEncoder):
+    """Jamba-style hybrid: a BiMamba stack with ONE POMO-native attention layer interleaved.
+
+    Diagnosis: BiMamba closes most of the gap to full attention but leaves a residual deficit
+    that cheap pooled global channels do not repair — the missing ingredient is exact all-pairs
+    context. This encoder inserts a SINGLE attention EncoderLayer (the baseline's own block,
+    reused verbatim — same qkv_dim/head_num/ff_hidden_dim) after ceil(N_BI/2) bimamba layers,
+    supplying that context where segment summaries fell short.
+
+    The attention layer is permutation-equivariant and POMO's carries no positional encoding,
+    so it runs INSIDE the serialized stream (between mamba layers, on the serialized sequence) —
+    no extra un/re-serialization, and the encoder stays end-to-end permutation-equivariant. The
+    EncoderLayer wraps its own add+norm+FFN, so it is applied directly (not through the mamba
+    pre-norm residual). N_BI is chosen so the total stays param-matched to the 10-layer anchor.
+    """
+
+    def __init__(self, **mp):
+        super().__init__(**mp)
+        # POMO's attention block, built lazily so mamba.py stays import-clean without POMO.
+        from serpentine.pomo import ensure_pomo_on_path
+        ensure_pomo_on_path()
+        from TSPModel import EncoderLayer
+        self.attn = EncoderLayer(**mp)
+        # Insert past the first half of the bimamba stack (after ceil(N_BI/2) layers).
+        self.attn_pos = (len(self.blocks) + 1) // 2
+
+    def forward(self, data):
+        # data: (B, P, 2)  ->  (B, P, embedding), in ORIGINAL node order
+        order, inv = self._orders(data)
+        h = self.embedding(data)
+        idx = order.unsqueeze(-1).expand(-1, -1, h.size(-1))
+        h_ser = torch.gather(h, 1, idx)
+        for i, (blk, nrm) in enumerate(zip(self.blocks, self.norms)):
+            if i == self.attn_pos:
+                h_ser = self.attn(h_ser)             # all-pairs context, in serialized order
+            h_ser = h_ser + blk(nrm(h_ser))          # pre-norm residual
+        if self.attn_pos == len(self.blocks):        # attn_pos never trails, but stay safe
+            h_ser = self.attn(h_ser)
+        inv_idx = inv.unsqueeze(-1).expand(-1, -1, h_ser.size(-1))
+        H = torch.gather(h_ser, 1, inv_idx)          # back to original node order
+        if self.global_channel is not None:
+            H = H + self.global_channel(H, order, inv)
+        return H

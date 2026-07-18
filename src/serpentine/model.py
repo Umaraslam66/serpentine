@@ -4,7 +4,7 @@ build_model reuses POMO's TSPModel (encoder + decoder + multi-start forward) and
 ONLY the encoder attribute for the Mamba encoder, so the decoder, forward, and RL
 interface stay byte-identical between baseline and candidate.
 """
-from serpentine.encoders.mamba import BiMambaEncoder, MambaEncoder
+from serpentine.encoders.mamba import BiMambaEncoder, HybridEncoder, MambaEncoder
 from serpentine.pomo import ensure_pomo_on_path
 
 
@@ -16,6 +16,8 @@ def build_model(encoder="attention", **mp):
         model.encoder = MambaEncoder(**mp)
     elif encoder == "bimamba":
         model.encoder = BiMambaEncoder(**mp)
+    elif encoder == "hybrid":
+        model.encoder = HybridEncoder(**mp)
     elif encoder != "attention":
         raise ValueError(f"unknown encoder: {encoder}")
     return model
