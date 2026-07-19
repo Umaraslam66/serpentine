@@ -129,8 +129,17 @@ Mamba literature, not contributions of this study. FINDINGS must not claim them 
 - [x] **Global-channel A/B @ 250k** — DONE 2026-07-18: mean 7.86 (within hilbert seed
       noise), segment 8.38 (= baseline). **Both refuted under RL**; line closed, Phase 2
       moot. See `incoming/WAVE_ANALYSIS.md` §3.
-- [ ] **BiMamba seeds 2–3 + BiMamba/random compose run** — the two surviving effects;
-      decides whether multistart parity is a stateable finding.
+- [x] **BiMamba seeds 2–3 + compose** — DONE 2026-07-19: parity SEED-ROBUST (multistart
+      1.94 ± 0.09 vs attn 1.91; single 5.57 ± 0.11, 10x tighter than uni-hilbert's ±1.03).
+      bimamba+random does NOT compose (7.61/3.30): random helps only causal scans —
+      bidirectionality makes Hilbert locality exploitable again.
+- [x] **500k extensions** — attention had NOT plateaued (2.45 single @500k); bimamba
+      4.89/1.544; multistart parity holds at 500k (±0.05 noise band).
+- [x] **Hybrid (4 BiMamba + 1 attention layer, −2.9% params)** — 250k: **4.01 single /
+      1.542 multistart** — beats attention's multistart at HALF the budget; curve still
+      falling. Sparse exact attention succeeds where pooled channels failed. Seed-1 only.
+- [ ] **Hybrid seeds 2–3 + 500k extension** — launched 2026-07-19; decides the final
+      stateable claim. Then: N≥1000 scale probe (where O(N) actually pays) is the next gate.
 - [x] **(C) Formal ablation** — mamba/random + mamba/sort seed-1 @250k COMPLETE
       (2026-07-01): **random 6.40% < sort 7.12% < hilbert 8.34%** — rule resolves
       inverted; Hilbert-locality premise refuted (§4b, `ablation/ABLATION.md`).
