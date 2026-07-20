@@ -138,8 +138,12 @@ Mamba literature, not contributions of this study. FINDINGS must not claim them 
 - [x] **Hybrid (4 BiMamba + 1 attention layer, −2.9% params)** — 250k: **4.01 single /
       1.542 multistart** — beats attention's multistart at HALF the budget; curve still
       falling. Sparse exact attention succeeds where pooled channels failed. Seed-1 only.
-- [ ] **Hybrid seeds 2–3 + 500k extension** — launched 2026-07-19; decides the final
-      stateable claim. Then: N≥1000 scale probe (where O(N) actually pays) is the next gate.
+- [x] **Hybrid seeds 2–3 + 500k extension** — DONE 2026-07-20: 3-seed @250k
+      **4.37 ± 0.33 / 1.63 ± 0.10** (every seed beats attention's matched-budget 1.91);
+      @500k **3.01 / 1.016 vs attention 2.45 / 1.589** — hybrid BEATS attention multistart
+      at equal budget (seed-1 vs seed-1, 11x noise band). WAVE_ANALYSIS.md Wave 3.
+- [ ] **Fairness confirmations** — hybrid s2/s3 → 500k, attention s2/s3 @500k (launched
+      2026-07-20). Then: N≥1000 scale probe (where O(N) actually pays) is the next gate.
 - [x] **(C) Formal ablation** — mamba/random + mamba/sort seed-1 @250k COMPLETE
       (2026-07-01): **random 6.40% < sort 7.12% < hilbert 8.34%** — rule resolves
       inverted; Hilbert-locality premise refuted (§4b, `ablation/ABLATION.md`).

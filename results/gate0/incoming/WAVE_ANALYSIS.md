@@ -108,3 +108,36 @@ under RL needs sparse exact all-pairs context, not global averages, over a linea
 
 **Caveats:** hybrid is seed-1 only (seeds 2–3 + 500k extension launched 2026-07-19);
 multistart differences below ~0.05 are eval noise; all N=100.
+
+---
+
+# Wave 3 (scored 2026-07-20): hybrid seed-robust at 250k; at 500k it BEATS attention multistart
+
+| arm | steps | single | multi |
+|---|---|---|---|
+| **hybrid s1 (extended)** | 500k | **3.013** | **1.016** |
+| attention s1 (extended) | 500k | 2.454 | 1.589 |
+| hybrid s1/s2/s3 | 250k | 4.01/4.65/4.46 → **4.37 ± 0.33** | 1.54/1.61/1.74 → **1.63 ± 0.10** |
+
+**1. Seed-robustness (250k):** every hybrid seed beats attention's budget-matched
+multistart (1.91): 1.54/1.61/1.74. Mean 1.63 ± 0.10 also ≈ attention@500k (1.589) —
+parity at half budget as a 3-seed statement.
+
+**2. At 500k the hybrid DECISIVELY beats attention on multistart: 1.016 vs 1.589**
+(+0.57pp, ~11x the ±0.05 eval-noise band), with single-traj closing to −0.56pp
+(3.01 vs 2.45). Hybrid curve flat by 460k (~3.0/~1.0 floor); attention flat since ~440k.
+The encoder that is 80% linear-scan Mamba + ONE attention layer, with 4.5% fewer params,
+produces strictly better multistart tour quality than the all-attention encoder at equal
+budget (seed 1 vs seed 1).
+
+**3. Honesty ledger for any external claim:** the 500k win is s1-vs-s1; attention has
+never been run on seeds 2–3 (project-long limitation, not new). Confirmations launched
+2026-07-20: hybrid s2/s3 → 500k, attention s2/s3 @ 500k. Until they land, the robust
+public claims are the 3-seed 250k statements; the 1.016-vs-1.589 result should be
+labeled seed-1. Best-of-k order ensembling: validated on two architectures
+(uni 3.33→2.72, bimamba/random 3.31→2.70 at k=8) — supporting observation only.
+
+**Gate-0 verdict, final form:** the encoder-swap KILL stands for pure Mamba variants, but
+the gate's real product is the mechanism chain — direction (BiMamba: parity multistart,
+10x seed stability), then sparse exact attention (hybrid: beats attention multistart at
+500k) — while pooled global channels and (for causal scans only) locality priors fail.
