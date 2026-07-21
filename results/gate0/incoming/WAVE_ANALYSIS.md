@@ -141,3 +141,16 @@ labeled seed-1. Best-of-k order ensembling: validated on two architectures
 the gate's real product is the mechanism chain — direction (BiMamba: parity multistart,
 10x seed stability), then sparse exact attention (hybrid: beats attention multistart at
 500k) — while pooled global channels and (for causal scans only) locality priors fail.
+
+---
+
+# Wave 4 — fairness runs (scored 2026-07-21): the 500k win is 3-seed on both sides
+
+Hybrid @500k, 3 seeds: single 3.013/3.098/3.136 → **3.08 ± 0.06**; multistart
+1.016/1.051/1.365 → **1.14 ± 0.19**. Attention seeds 2–3 (from scratch) TIMEOUT'd at 24h
+(cold-start 500k needs ~27h; the s1 "extension" was a resume) — checkpointed @440k at
+2.778/1.732 and 2.589/1.673, resumed to 500k (jobs 50033399/50033401). Already decisive:
+**the WORST hybrid seed multistart (1.365) beats the BEST attention figure (s1 final
+1.589)**, with attention's multistart curves flat from 400k. Hybrid single-traj remains
+behind attention (3.08 ± 0.06 vs ~2.45–2.78). Final attention s2/s3 numbers land ~6h
+after resume; only cosmetic updates expected.
