@@ -43,8 +43,9 @@ under identical POMO reinforcement learning and a byte-identical decoder, with
 only the encoder swapped and parameter counts matched.\footnote{Code and
 pre-registered decision rules: \url{https://github.com/Umaraslam66/serpentine}.}
 The obvious recipe---a Hilbert-curve serialization scanned by a unidirectional
-Mamba---is killed: at a matched 250k-step budget it reaches an 8.34\pct{}
-single-trajectory optimality gap versus attention's 2.95\pct. Diagnostics
+Mamba---is killed: at a matched 250k-step budget it reaches a 7.50\,$\pm$\,1.03
+single-trajectory optimality gap over three seeds (8.34\pct{} on the
+pre-registered seed) versus attention's 2.95\pct. Diagnostics
 localize the failure to a short, one-directional receptive field rather than a
 wiring bug or representation collapse, and a geometry study shows the Hilbert
 prior scatters $\sim$14\pct{} of spatial neighbors far apart on the scan line.
@@ -92,8 +93,9 @@ end, and follow the mechanism to a repair. Our contributions, scoped honestly:
 \begin{itemize}
   \item \textbf{A clean kill of the vanilla recipe under RL.} At matched
   parameters and budget on TSP-100, a Hilbert-ordered unidirectional Mamba
-  encoder reaches an 8.34\pct{} single-trajectory gap versus attention's
-  2.95\pct{} (\S\ref{sec:kill}). The kill was pre-registered.
+  encoder reaches a 7.50\,$\pm$\,1.03 single-trajectory gap across three seeds
+  (its \emph{best} seed, 6.36\pct, is still more than 3 points behind
+  attention's 2.95\pct; \S\ref{sec:kill}). The kill was pre-registered.
   \item \textbf{A localized diagnosis.} The failure is not a wiring bug (order
   demonstrably reaches the decoder) and not representation collapse (the Mamba
   embeddings are higher-rank than attention's); finite-difference probes show a
@@ -200,8 +202,20 @@ averaged over the 100 POMO start nodes. \emph{Multistart} gap is the best of the
 omit the $\times$8 augmentation used in headline POMO numbers so that the
 encoder, not the augmentation, is what the comparison measures.
 
+\paragraph{Relation to published POMO numbers.}
+Published POMO reaches $\sim$1\pct{} greedy on TSP-100 at a much larger training
+budget; we reproduced the official released checkpoint at 0.97\pct{} greedy
+(0.149\pct{} with $\times$8 augmentation) under our exact oracle and evaluation
+set as a seatbelt before any experiment (artifact in the repository). Our
+attention baseline is therefore not undertrained relative to its budget---it is
+the same architecture trained at a deliberately smaller, \emph{matched} budget
+(250k steps of batch 64, $\approx$16M instances), because every claim in this
+paper is a matched-budget comparison between encoders, not a state-of-the-art
+claim. Absolute gaps here should not be compared against headline POMO numbers.
+
 \paragraph{Parameter matching.}
-The encoders are matched in total model size (Table~\ref{tab:params}): attention
+The encoders are matched in total model size to within 4.5\pct{}
+(Table~\ref{tab:params}): attention
 (6 layers, $d=128$, 8 heads) totals 1{,}269{,}760 parameters; the unidirectional
 Mamba encoder (10 Mamba-1 blocks, $d=128$) totals 1{,}249{,}792; the
 bidirectional Mamba (5 layers, each summing a forward and backward scan) totals
@@ -245,16 +259,19 @@ Before running, we fixed a kill rule: kill the candidate if it is worse than
 attention by more than 1 percentage point \emph{and} Hilbert clearly beats
 random ordering. At the matched 250k-step budget the Hilbert-ordered
 unidirectional Mamba reaches an 8.34\pct{} single-trajectory gap and 4.46\pct{}
-multistart, versus attention's 2.95\pct{} / 1.91\pct{} (Table~\ref{tab:main}).
-The first clause of the kill rule is satisfied by a wide margin ($+5.4$ points
-absolute); as \S\ref{sec:order} shows, the second clause resolves in an
-unanticipated direction. The encoder-swap-as-specified is dead. We now ask
+multistart on the pre-registered seed (three-seed mean 7.50\,$\pm$\,1.03 /
+3.64\,$\pm$\,1.09; even its best seed trails attention by more than 3 points),
+versus attention's 2.95\pct{} / 1.91\pct{} (Table~\ref{tab:main}). The first
+clause of the kill rule is satisfied by a wide margin under every seed; as
+\S\ref{sec:order} shows, the second clause resolves in an unanticipated
+direction. The encoder-swap-as-specified is dead. We now ask
 \emph{why}, using four diagnostics on the trained Hilbert/uni-Mamba seed-1
 checkpoint.
 
 \paragraph{(1) It is not a wiring bug---order reaches the decoder.}
 We swap the inference-time scan order on the trained checkpoint without
-retraining ($n=200$). The gap moves from 8.38\pct{} (Hilbert, the training order)
+retraining, on an $n=200$ subset (hence the small offset from the $n=1000$
+figures elsewhere). The gap moves from 8.38\pct{} (Hilbert, the training order)
 to 33.49\pct{} (sort) to 56.38\pct{} (random). Feeding the wrong order collapses
 the model, so the serialize$\rightarrow$scan$\rightarrow$un-serialize$\rightarrow$decode
 path is intact and strongly order-dependent; the failure is not a plumbing bug.
@@ -279,8 +296,9 @@ positions apart on the scan line (curve-boundary discontinuities). A short causa
 window cannot reconnect them, whereas all-pairs attention sees them for free. The
 scatter worsens with scale: the mean line-separation of spatial neighbors grows
 from 7 to 48 as $N$ grows from 100 to 5000 (fraction $>$10 apart:
-14.6\pct{}$\rightarrow$22.2\pct{}), while the encoder's receptive field is fixed
-($\sim$20). This is a geometry of the serialization, not a contribution of ours;
+14.6\pct{}$\rightarrow$22.2\pct{} under the scaling study's estimator, which
+differs slightly from the 14.4\pct{} $k{=}5$ figure above), while the encoder's
+receptive field is fixed ($\sim$20). This is a geometry of the serialization, not a contribution of ours;
 it predicts the limitation \emph{worsens} at the larger $N$ where $O(N)$ would
 otherwise pay off.
 
@@ -367,7 +385,8 @@ A param-matched bidirectional Mamba (5 layers, each summing a forward and backwa
 scan; 1{,}248{,}512 params) directly attacks the one-directional half of the
 diagnosis. Its single-trajectory gap of 5.57\,$\pm$\,0.11 closes roughly half of
 the uni-Mamba gap. The more striking result is on multistart: 1.94\,$\pm$\,0.09
-across three seeds, statistically on par with attention's budget-matched 1.91.
+across three seeds, on par with attention's budget-matched 1.91 (a single seed;
+with $n{=}3$ vs $n{=}1$ we report ranges rather than tests).
 Under multistart decoding the bidirectional encoder supports tours as good as
 attention's, at $O(N)$. Two caveats keep this at "parity" rather than "win": it is
 a matched-250k comparison, and the residual deficit is concentrated in
@@ -389,9 +408,10 @@ hybrid decisively beats attention on multistart. Seed 1 reaches 3.013\pct{}
 single / 1.016\pct{} multistart versus attention's 2.454\pct{} / 1.589\pct;
 across three seeds the hybrid is 3.08\,$\pm$\,0.06 / 1.14\,$\pm$\,0.19, and the
 \emph{worst} hybrid seed's multistart (1.365) is still below the best attention
-figure (1.589), well outside the $\pm$0.05 multistart eval-noise band. This is the
-one place we use the word "beats," and we scope it: it is a multistart claim, with
-the noise band and seed range stated. On single-trajectory, attention remains
+figure (1.589), well outside the $\pm$0.05 multistart eval-noise band (estimated
+from the fluctuation of the final three evaluations on the flat tails of the
+500k curves). Wherever this paper says "beats," it means exactly this scoped
+multistart claim, with the noise band and seed range stated. On single-trajectory, attention remains
 ahead ($\sim$2.45--2.78 vs the hybrid's 3.08\,$\pm$\,0.06). We are explicit that
 the interleaving pattern is prior art \citep{jamba2024,zamba2024}; the finding is
 that sparse \emph{exact} attention, not pooled global averages, is the repair that
@@ -410,11 +430,12 @@ single-trajectory greedy decoding. All gaps are percent over the LKH-3 oracle.}
 
 \subsection{Best-of-$k$ serialization ensembling}
 A scan encoder has a degree of freedom attention lacks: the serialization. At
-inference on random-trained checkpoints we draw $k=8$ random orders and keep the
-per-instance best tour. This lowers uni-Mamba/random multistart from 3.33\pct{} to
-2.72\pct{} (average-start 6.42\pct{}$\rightarrow$5.01\pct{}) and
-BiMamba/random from 3.31\pct{} to 2.70\pct. Setting $k=1$ reproduces the standard
-eval exactly. Attention has no ordering degree of freedom, so this is a
+inference on random-trained \emph{seed-1} checkpoints we draw $k=8$ random orders
+and keep the per-instance best tour. This lowers uni-Mamba/random multistart from
+3.33\pct{} to 2.72\pct{} (average-start 6.42\pct{}$\rightarrow$5.01\pct{}) and
+BiMamba/random from 3.31\pct{} to 2.70\pct{} (the $k{=}1$ figures reproduce the
+respective seed-1 training-time evals to within order-resampling noise; the
+three-seed means in Table~\ref{tab:main} differ slightly). Attention has no ordering degree of freedom, so this is a
 diversity knob unique to scan encoders. We report it as a supporting observation;
 its natural host is a strong random-trained model, which---per \S\ref{sec:order}
 ---does not exist in the bidirectional regime.
@@ -505,8 +526,14 @@ architecture, is the result.
 The strongest 500k statement (1.016 vs 1.589) is seed-1 vs seed-1; the
 seed-robust form is the 250k three-seed comparison and the 500k three-seed hybrid
 mean whose worst seed still beats the best attention figure. Attention seeds 2--3
-are finalizing from a 440k checkpoint at submission time. Multistart differences
-below $\sim$0.05 are within eval noise and should not be read as wins.
+are finalizing from a 440k checkpoint at submission time. Attention at 250k is a
+single seed; with three seeds against one we report ranges and worst-vs-best
+comparisons rather than significance tests. Multistart differences below
+$\sim$0.05 are within eval noise and should not be read as wins. Finally, the
+throughput table shows no speed advantage for the scan encoders at N$=$100
+(bidirectional 4.78 vs attention $\sim$5.1 it/s): at this size the paper's
+result is about \emph{quality at matched cost}, and the efficiency motivation
+rests entirely on the untested N$\geq$1000 regime.
 
 % ============================================================================
 \section{Conclusion}
