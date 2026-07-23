@@ -17,6 +17,13 @@
 % --- Page geometry: arXiv/NeurIPS-preprint margins ---
 \usepackage[letterpaper,margin=1in]{geometry}
 
+% --- Color system (loaded early so table option and accent are available) ---
+\usepackage[table,dvipsnames]{xcolor}
+\definecolor{accent}{RGB}{20,60,110}       % deep navy accent
+\definecolor{accentdark}{RGB}{14,42,78}    % near-black navy for heading text
+\definecolor{headtint}{RGB}{223,231,243}   % light navy tint for table header rows
+\definecolor{zebratint}{RGB}{244,247,251}  % very light tint for alternating rows / abstract
+
 % --- Math and symbols ---
 \usepackage{amsmath,amssymb}
 
@@ -29,13 +36,19 @@
 % --- Graphics, tables, floats ---
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{colortbl}
 \renewcommand{\arraystretch}{1.18}
-\usepackage[font=small,labelfont=bf,labelsep=period,skip=6pt]{caption}
+\usepackage[font=small,labelfont={bf,color=accent},labelsep=period,skip=6pt]{caption}
 
-% --- Section heading styling (modest, no color) ---
+% --- Section heading styling (accent numbers, small-caps headings, thin rule) ---
 \usepackage{titlesec}
-\titleformat{\section}{\normalfont\large\bfseries}{\thesection}{0.75em}{}
-\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{0.6em}{}
+\titleformat{\section}[hang]
+  {\normalfont\large\bfseries\scshape\color{accentdark}}
+  {\color{accent}\thesection}{0.75em}{}
+  [{\vspace{2pt}{\color{accent}\titlerule[0.9pt]}}]
+\titleformat{\subsection}[hang]
+  {\normalfont\normalsize\bfseries\color{accentdark}}
+  {\color{accent}\thesubsection}{0.6em}{}
 \titlespacing*{\section}{0pt}{2.4ex plus 1ex minus .2ex}{1.2ex plus .2ex}
 \titlespacing*{\subsection}{0pt}{2.0ex plus .8ex minus .2ex}{0.9ex plus .2ex}
 
@@ -43,15 +56,60 @@
 \usepackage{natbib}
 \usepackage{url}
 \usepackage{hyperref}
-\usepackage{xcolor}
 \usepackage{authblk}
 
-\hypersetup{colorlinks=true, linkcolor=blue!50!black, citecolor=blue!50!black, urlcolor=blue!50!black}
+\hypersetup{colorlinks=true, linkcolor=accent, citecolor=accent, urlcolor=accent}
+
+% --- Styled title block via titling (large bold accent title + double accent rule) ---
+\usepackage{titling}
+\setlength{\droptitle}{-2.5em}
+\pretitle{\begin{center}\huge\bfseries\color{accentdark}}
+\posttitle{\par\end{center}\vspace{5pt}%
+  \begin{center}%
+    {\color{accent}\rule{\textwidth}{1.4pt}}\\[2.5pt]%
+    {\color{accent}\rule{\textwidth}{0.5pt}}%
+  \end{center}\vspace{4pt}}
+\preauthor{\begin{center}\large}
+\postauthor{\par\end{center}}
+\predate{}\postdate{}
 
 % --- Title-block spacing ---
 \renewcommand\Authfont{\normalsize\scshape}
 \renewcommand\Affilfont{\normalsize\itshape}
 \setlength{\affilsep}{0.6em}
+
+% --- Abstract as a distinct block: narrower measure, left accent rule, light tint ---
+\usepackage[framemethod=default]{mdframed}
+\mdfdefinestyle{abstractstyle}{%
+  linewidth=2.5pt, linecolor=accent,
+  topline=false, bottomline=false, rightline=false, leftline=true,
+  backgroundcolor=zebratint,
+  innerleftmargin=12pt, innerrightmargin=12pt,
+  innertopmargin=9pt, innerbottommargin=9pt,
+  leftmargin=22pt, rightmargin=22pt,
+  skipabove=6pt, skipbelow=10pt}
+\renewenvironment{abstract}{%
+  \small
+  \begin{mdframed}[style=abstractstyle]%
+  \noindent{\bfseries\color{accent}\abstractname.}\hspace{0.6em}\ignorespaces
+}{%
+  \end{mdframed}}
+
+% --- Running headers from page 2 (fancyhdr): short title left, page right, accent rule ---
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\scshape\color{accentdark}When Mamba Needs Attention}
+\fancyhead[R]{\small\color{accentdark}\thepage}
+\renewcommand{\headrulewidth}{0.6pt}
+\renewcommand{\headrule}{{\color{accent}\hrule height \headrulewidth}}
+\fancypagestyle{plain}{%
+  \fancyhf{}%
+  \fancyfoot[C]{\small\color{accentdark}\thepage}%
+  \renewcommand{\headrulewidth}{0pt}}
+
+% --- Table header helper: light accent tint + accent bold text ---
+\newcommand{\headrow}{\rowcolor{headtint}}
 
 \newcommand{\pct}{\%}
 
@@ -70,8 +128,8 @@ decisions as well as a quadratic-time attention encoder on Euclidean TSP-100,
 under identical POMO reinforcement learning and a byte-identical decoder, with
 only the encoder swapped and parameter counts matched.\footnote{Code and
 pre-registered decision rules: \url{https://github.com/Umaraslam66/serpentine}.}
-The obvious recipe---a Hilbert-curve serialization scanned by a unidirectional
-Mamba---is killed: at a matched 250k-step budget it reaches a 7.50\,$\pm$\,1.03
+The obvious recipe, a Hilbert-curve serialization scanned by a unidirectional
+Mamba, is killed: at a matched 250k-step budget it reaches a 7.50\,$\pm$\,1.03
 single-trajectory optimality gap over three seeds (8.34\pct{} on the
 pre-registered seed) versus attention's 2.95\pct. Diagnostics
 localize the failure to a short, one-directional receptive field rather than a
@@ -109,8 +167,8 @@ the reinforcement-learning training that NCO actually uses?}
 We treat this as a fail-fast experiment. We fix the decoder, the training
 algorithm (POMO REINFORCE \citep{pomo2020,williams1992}), the optimizer, the
 budget, the evaluation set, and the parameter count, and swap only the encoder.
-A state-space encoder needs a serialization---an order in which to scan the
-unordered node set---and the natural choice for 2D points is a space-filling
+A state-space encoder needs a serialization, an order in which to scan the
+unordered node set, and the natural choice for 2D points is a space-filling
 Hilbert curve \citep{hilbert1891,ptv3-2024}. The candidate is therefore a
 Hilbert-ordered unidirectional Mamba encoder; we ask whether it clears the
 attention baseline.
@@ -133,7 +191,7 @@ end, and follow the mechanism to a repair. Our contributions, scoped honestly:
   single-seed ablation suggested a strict random $<$ sort $<$ Hilbert inversion;
   two further seeds refuted the strict claim. The surviving statement is that a
   locality prior buys nothing for \emph{causal} scans and doubles seed variance,
-  and---crucially---that its value depends on scan causality: with a bidirectional
+  and, crucially, that its value depends on scan causality: with a bidirectional
   scan, random ordering \emph{hurts} (\S\ref{sec:order}).
   \item \textbf{A diagnosis-guided repair.} Pooled global channels do not help
   under RL; a param-matched bidirectional scan reaches multistart parity with
@@ -178,7 +236,7 @@ the constructive routing we study.
 Mamba has been adapted extensively to unordered 3D points, which, like routing,
 require serializing a set. The canonical observation that a unidirectional scan
 has a causal, all-pairs-free receptive field relative to attention is from
-PointMamba \citep{pointmamba2024}. Known mitigations---all prior art---include
+PointMamba \citep{pointmamba2024}. Known mitigations, all prior art, include
 bidirectional scanning \citep{vim2024,hydramamba2025,pamba2025}, multi-curve or
 shuffled serialization \citep{ptv3-2024}, and hybrid local/global aggregation
 \citep{pillarmamba2025}. HydraMamba \citep{hydramamba2025} further notes that a
@@ -191,8 +249,8 @@ space-filling curves. We reuse this diagnostic vocabulary; we do not claim it.
 ECO \citep{eco2026} applies a Mamba encoder--decoder to TSP/CVRP, but trains via
 supervised fine-tuning plus iterative preference optimization (not
 policy-gradient RL), targets large instances (its smallest reported TSP is
-N$=$200), and never tests N$=$100. The cell we occupy---matched-budget POMO
-REINFORCE at N$=$100, decoder held fixed---is not covered by ECO, and our kill of
+N$=$200), and never tests N$=$100. The cell we occupy (matched-budget POMO
+REINFORCE at N$=$100, decoder held fixed) is not covered by ECO, and our kill of
 vanilla Mamba+Hilbert at N$=$100 is consistent with ECO's large-N focus and its
 reliance on supervised bootstrapping.
 
@@ -235,7 +293,7 @@ Published POMO reaches $\sim$1\pct{} greedy on TSP-100 at a much larger training
 budget; we reproduced the official released checkpoint at 0.97\pct{} greedy
 (0.149\pct{} with $\times$8 augmentation) under our exact oracle and evaluation
 set as a seatbelt before any experiment (artifact in the repository). Our
-attention baseline is therefore not undertrained relative to its budget---it is
+attention baseline is therefore not undertrained relative to its budget; it is
 the same architecture trained at a deliberately smaller, \emph{matched} budget
 (250k steps of batch 64, $\approx$16M instances), because every claim in this
 paper is a matched-budget comparison between encoders, not a state-of-the-art
@@ -248,7 +306,7 @@ The encoders are matched in total model size to within 4.5\pct{}
 Mamba encoder (10 Mamba-1 blocks, $d=128$) totals 1{,}249{,}792; the
 bidirectional Mamba (5 layers, each summing a forward and backward scan) totals
 1{,}248{,}512; and the hybrid (4 bidirectional-Mamba layers with one POMO-native
-attention layer inserted after layer 2) totals 1{,}213{,}184---4.5\pct{}
+attention layer inserted after layer 2) totals 1{,}213{,}184, which is 4.5\pct{}
 \emph{fewer} parameters than attention. The Mamba runs use the mamba-ssm CUDA
 kernel, gated against a pure-PyTorch reference at $<10^{-3}$ agreement.
 Throughput on the A100 is comparable across encoders (attention $\sim$5.1,
@@ -269,9 +327,10 @@ fewest parameters (4.5\pct{} below attention).}
 \setlength{\tabcolsep}{5pt}
 \begin{tabular}{lll r}
 \toprule
+\headrow
 Encoder & Layers & Serialization & Parameters \\
 \midrule
-Attention        & 6 (d=128, 8 heads)                       & --- (permutation-invariant) & 1{,}269{,}760 \\
+Attention        & 6 (d=128, 8 heads)                       & n/a (permutation-invariant) & 1{,}269{,}760 \\
 Uni-Mamba        & 10 Mamba-1 blocks                        & Hilbert / random / sort & 1{,}249{,}792 \\
 BiMamba          & 5 (fwd+bwd scan, summed)                 & Hilbert / random & 1{,}248{,}512 \\
 Hybrid           & 4 BiMamba + 1 attention (after layer 2)  & Hilbert & 1{,}213{,}184 \\
@@ -298,7 +357,7 @@ direction. The encoder-swap-as-specified is dead. We now ask
 \emph{why}, using four diagnostics on the trained Hilbert/uni-Mamba seed-1
 checkpoint.
 
-\paragraph{(1) It is not a wiring bug---order reaches the decoder.}
+\paragraph{(1) It is not a wiring bug: order reaches the decoder.}
 We swap the inference-time scan order on the trained checkpoint without
 retraining, on an $n=200$ subset (hence the small offset from the $n=1000$
 figures elsewhere). The gap moves from 8.38\pct{} (Hilbert, the training order)
@@ -316,7 +375,7 @@ attention's; the deficit is in \emph{what} they encode, not encoder health.
 Finite-difference sensitivity shows that upstream sensitivity is exactly zero (a
 node never sees its sequence-successors), and downstream influence decays
 $\sim$99\pct{} within $\sim$20 sequence positions. Each node integrates only a
-short, one-directional window---consistent with the causal-scan limitation of
+short, one-directional window, consistent with the causal-scan limitation of
 PointMamba \citep{pointmamba2024}.
 
 \paragraph{(4) The Hilbert prior scatters spatial neighbors.}
@@ -337,7 +396,7 @@ otherwise pay off.
 \label{sec:order}
 % ============================================================================
 
-The second clause of the kill rule---"Hilbert clearly beats random"---turns out
+The second clause of the kill rule ("Hilbert clearly beats random") turns out
 to be false, and the way it turned out is itself a methodological lesson. We
 trained unidirectional Mamba from scratch under three serializations, identical
 in every other respect (Figure~\ref{fig:order}).
@@ -347,7 +406,7 @@ On seed 1, the ordering hierarchy inverted relative to the locality prior:
 random 6.40\pct{} $<$ sort 7.12\pct{} $<$ Hilbert 8.34\pct{} single-trajectory,
 with random ahead of Hilbert at every 20k-step checkpoint. Read literally, this
 refutes the Hilbert-locality premise: spatial-locality serialization does not
-help this encoder---it hurts.
+help this encoder; it hurts.
 
 \paragraph{Refutation by further seeds.}
 Seeds 2--3 do not sustain the strict inversion. Across three seeds, Hilbert spans
@@ -430,7 +489,7 @@ hybrid inserts a single POMO-native attention EncoderLayer after layer 2 of a
 4-layer bidirectional-Mamba stack, inside the serialized stream, at 1{,}213{,}184
 parameters (4.5\pct{} \emph{fewer} than attention). At 250k it reaches
 4.37\,$\pm$\,0.33 single-trajectory and 1.63\,$\pm$\,0.10 multistart across three
-seeds---and every hybrid seed's multistart (1.54/1.61/1.74) beats attention's
+seeds, and every hybrid seed's multistart (1.54/1.61/1.74) beats attention's
 budget-matched 1.91 (Table~\ref{tab:main}).
 
 At the converged 500k budget (Table~\ref{tab:conv}, Figure~\ref{fig:hero}) the
@@ -467,8 +526,8 @@ BiMamba/random from 3.31\pct{} to 2.70\pct{} (the $k{=}1$ figures reproduce the
 respective seed-1 training-time evals to within order-resampling noise; the
 three-seed means in Table~\ref{tab:main} differ slightly). Attention has no ordering degree of freedom, so this is a
 diversity knob unique to scan encoders. We report it as a supporting observation;
-its natural host is a strong random-trained model, which---per \S\ref{sec:order}
----does not exist in the bidirectional regime.
+its natural host is a strong random-trained model, which (per \S\ref{sec:order})
+does not exist in the bidirectional regime.
 
 % ============================================================================
 % Tables: main 250k and converged 500k
@@ -484,6 +543,7 @@ Every hybrid seed's multistart is below attention's 1.91.}
 \setlength{\tabcolsep}{5pt}
 \begin{tabular}{ll cc}
 \toprule
+\headrow
 Encoder / order & Seeds & Single-traj (\pct{}) & Multistart (\pct{}) \\
 \midrule
 Attention             & s1        & 2.95              & 1.91 \\
@@ -514,6 +574,7 @@ separation is three-seed on both sides: worst hybrid 1.365 vs best attention
 \setlength{\tabcolsep}{5pt}
 \begin{tabular}{ll cc}
 \toprule
+\headrow
 Encoder & Seeds & Single-traj (\pct{}) & Multistart (\pct{}) \\
 \midrule
 Attention & s1              & 2.454 & 1.589 \\
@@ -540,8 +601,8 @@ Hybrid & s1,s2,s3 (mean)    & 3.08\,$\pm$\,0.06 & 1.14\,$\pm$\,0.19 \\
 Every number here is at N$=$100, where attention's $O(N^2)$ is cheap. The
 motivation for a linear-scan encoder is large $N$, and our own geometry study
 (\S\ref{sec:kill}) predicts the receptive-field deficit \emph{worsens} with scale.
-Whether the hybrid's multistart advantage survives---and whether $O(N)$ actually
-pays---at $N\geq1000$ is the next gate, not a claim of this paper.
+Whether the hybrid's multistart advantage survives, and whether $O(N)$ actually
+pays, at $N\geq1000$ is the next gate, not a claim of this paper.
 
 \paragraph{Single-trajectory still favors attention.}
 Our win is a multistart result. On single-trajectory greedy decoding attention
@@ -579,8 +640,8 @@ the decoder and parameter budget held fixed. The vanilla Hilbert+Mamba recipe is
 killed, and the failure is a short one-directional receptive field, not a bug or
 collapsed representations. Following the diagnosis, pooled global channels do not
 help, but bidirectionality reaches multistart parity with attention while cutting
-seed variance tenfold, and a hybrid with a single exact attention layer---4.5\pct{}
-smaller than the attention encoder---beats attention on converged multistart tour
+seed variance tenfold, and a hybrid with a single exact attention layer, 4.5\pct{}
+smaller than the attention encoder, beats attention on converged multistart tour
 quality. Along the way we found that the value of a serialization prior depends on
 scan causality, and that a clean single-seed ordering curve was enough to state an
 inversion two further seeds dissolved. All of this is scoped to N$=$100; whether
