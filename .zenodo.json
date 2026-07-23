@@ -1,0 +1,32 @@
+{
+  "title": "serpentine: When Mamba Needs Attention — code, results, and pre-registered decision rules",
+  "description": "Code, training curves, evaluation artifacts, and pre-registered decision rules for the paper “When Mamba Needs Attention”: a matched-budget study of state-space (Mamba) encoders versus attention for TSP-100 routing under POMO reinforcement learning. Includes the Hilbert/random/sort ordering ablation across seeds, receptive-field and geometry diagnostics, bidirectional-Mamba and global-channel arms, the hybrid encoder (4 BiMamba layers + 1 attention layer) that beats the attention baseline on multistart tour quality at a converged budget, and the best-of-k serialization-ensembling probe.",
+  "creators": [
+    {
+      "name": "Aslam, Umar",
+      "affiliation": "Independent Researcher"
+    }
+  ],
+  "upload_type": "software",
+  "access_right": "open",
+  "license": "MIT",
+  "keywords": [
+    "combinatorial optimization",
+    "travelling salesman problem",
+    "state-space models",
+    "Mamba",
+    "attention",
+    "hybrid architectures",
+    "space-filling curves",
+    "reinforcement learning",
+    "POMO",
+    "neural combinatorial optimization"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/Umaraslam66/serpentine",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    }
+  ]
+}
