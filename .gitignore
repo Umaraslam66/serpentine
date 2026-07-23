@@ -26,3 +26,4 @@ results/*
 !results/.gitkeep
 !results/gate0/
 docs/compass_artifact_*
+.env
