@@ -60,6 +60,8 @@ METADATA = {
             "neural combinatorial optimization",
         ],
         "related_identifiers": [
+            {"identifier": "10.5281/zenodo.21517264",
+             "relation": "isSupplementedBy", "scheme": "doi"},
             {"identifier": "https://github.com/Umaraslam66/serpentine",
              "relation": "isSupplementedBy", "scheme": "url"},
         ],

@@ -1,5 +1,7 @@
 # serpentine — When Mamba Needs Attention
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21517264.svg)](https://doi.org/10.5281/zenodo.21517264)
+
 **Can a Hilbert-ordered Mamba (state-space) encoder drive routing decisions as well as a
 standard attention encoder on Euclidean TSP-100?**
 
