@@ -1,0 +1,20 @@
+{
+  "encoder": "attention",
+  "order": "hilbert",
+  "seed": 2,
+  "steps": 500000,
+  "target_steps": 500000,
+  "capped": false,
+  "batch_size": 64,
+  "n_params": 1269760,
+  "train_sec": 11185.9,
+  "steps_per_sec": 5.006,
+  "gpu_hours": 3.107,
+  "final_loss": -0.09878619194030762,
+  "gpu_mem_gb": 5.103,
+  "gpu": "NVIDIA A100-SXM-64GB",
+  "eval_n": 1000,
+  "opt_mean": 7.749371521,
+  "greedy_single_traj_gap_pct": 2.5969304973913587,
+  "greedy_multistart_gap_pct": 1.6323122216989283
+}

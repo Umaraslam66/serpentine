@@ -154,3 +154,8 @@ Hybrid @500k, 3 seeds: single 3.013/3.098/3.136 → **3.08 ± 0.06**; multistart
 1.589)**, with attention's multistart curves flat from 400k. Hybrid single-traj remains
 behind attention (3.08 ± 0.06 vs ~2.45–2.78). Final attention s2/s3 numbers land ~6h
 after resume; only cosmetic updates expected.
+
+**Wave 4 close-out (2026-07-21 evening):** attention s2/s3 finals: 2.597 (1.632) and
+2.503 (1.621) @500k. Attention 3-seed @500k: single **2.52 ± 0.07**, multistart
+**1.61 ± 0.02**. The hybrid multistart win (1.14 ± 0.19) is now 3-seed vs 3-seed with
+non-overlapping ranges (worst hybrid 1.365 < best attention 1.589). Gate 0 CLOSED.

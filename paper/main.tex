@@ -403,9 +403,9 @@ seeds---and every hybrid seed's multistart (1.54/1.61/1.74) beats attention's
 budget-matched 1.91 (Table~\ref{tab:main}).
 
 At the converged 500k budget (Table~\ref{tab:conv}, Figure~\ref{fig:hero}) the
-hybrid decisively beats attention on multistart. Seed 1 reaches 3.013\pct{}
-single / 1.016\pct{} multistart versus attention's 2.454\pct{} / 1.589\pct;
-across three seeds the hybrid is 3.08\,$\pm$\,0.06 / 1.14\,$\pm$\,0.19, and the
+hybrid decisively beats attention on multistart. Across three seeds on each
+side, the hybrid reaches 3.08\,$\pm$\,0.06 single / 1.14\,$\pm$\,0.19 multistart
+versus attention's 2.52\,$\pm$\,0.07 / 1.61\,$\pm$\,0.02, and the
 \emph{worst} hybrid seed's multistart (1.365) is still below the best attention
 figure (1.589), well outside the $\pm$0.05 multistart eval-noise band (estimated
 from the fluctuation of the final three evaluations on the flat tails of the
@@ -474,17 +474,19 @@ Hybrid                & s1,s2,s3  & 4.37\,$\pm$\,0.33 & 1.63\,$\pm$\,0.10 \\
 \begin{table}[t]
 \centering
 \caption{Converged results at 500k steps (curves flat). Optimality gap (\pct{}
-over LKH-3), single-trajectory (multistart). Attention seeds 2--3 reached 440k at
-walltime; their final 500k numbers are pending (resumed) and are labeled
-accordingly. The multistart eval-noise band is $\pm$0.05.}
+over LKH-3), single-trajectory (multistart). All rows are final 500k numbers;
+the multistart eval-noise band is $\pm$0.05. The hybrid--attention multistart
+separation is three-seed on both sides: worst hybrid 1.365 vs best attention
+1.589.}
 \label{tab:conv}
 \begin{tabular}{ll cc}
 \toprule
 Encoder & Seeds & Single-traj (\pct{}) & Multistart (\pct{}) \\
 \midrule
 Attention & s1              & 2.454 & 1.589 \\
-Attention & s2 (@440k)      & 2.778 & 1.732 \\
-Attention & s3 (@440k)      & 2.589 & 1.673 \\
+Attention & s2              & 2.597 & 1.632 \\
+Attention & s3              & 2.503 & 1.621 \\
+Attention & s1,s2,s3 (mean) & 2.52\,$\pm$\,0.07 & 1.61\,$\pm$\,0.02 \\
 \midrule
 BiMamba / Hilbert & s1      & 4.893 & 1.544 \\
 \midrule
@@ -522,12 +524,11 @@ where two pooled global-channel variants did not. That contrast, not the
 architecture, is the result.
 
 \paragraph{Fairness caveats.}
-The strongest 500k statement (1.016 vs 1.589) is seed-1 vs seed-1; the
-seed-robust form is the 250k three-seed comparison and the 500k three-seed hybrid
-mean whose worst seed still beats the best attention figure. Attention seeds 2--3
-are finalizing from a 440k checkpoint at submission time. Attention at 250k is a
-single seed; with three seeds against one we report ranges and worst-vs-best
-comparisons rather than significance tests. Multistart differences below
+The 500k multistart comparison is three-seed on both sides: hybrid
+1.14\,$\pm$\,0.19 versus attention 1.61\,$\pm$\,0.02, with the worst hybrid seed
+(1.365) below the best attention seed (1.589). Attention at 250k remains a
+single seed; there and wherever seed counts are unequal we report ranges and
+worst-vs-best comparisons rather than significance tests. Multistart differences below
 $\sim$0.05 are within eval noise and should not be read as wins. Finally, the
 throughput table shows no speed advantage for the scan encoders at N$=$100
 (bidirectional 4.78 vs attention $\sim$5.1 it/s): at this size the paper's
