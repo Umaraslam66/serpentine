@@ -1,7 +1,11 @@
-# serpentine
+# serpentine — When Mamba Needs Attention
 
 **Can a Hilbert-ordered Mamba (state-space) encoder drive routing decisions as well as a
 standard attention encoder on Euclidean TSP-100?**
+
+📄 **Paper:** *When Mamba Needs Attention* (Umar Aslam, 2026) — LaTeX source and PDF in
+[`paper/`](paper/). **Answer: not alone — but a hybrid with ONE attention layer beats the
+attention baseline on multistart tour quality at 4.5 % fewer parameters.**
 
 A space-filling-curve serialization turns an unordered set of cities into a 1-D sequence; a
 Mamba encoder then reads that sequence. The representation trick is already validated in 3-D
@@ -19,18 +23,27 @@ construction + RL setup, matching attention at N=100. A clean negative is a usef
 - **Discipline:** Hilbert ordering is unit-tested; the mamba-ssm CUDA kernel is numerically
   gated against a pure-PyTorch reference (`< 1e-3`) before any training.
 
-## Status (Gate 0)
+## Results (Gate 0 — CLOSED 2026-07-21)
 
-| stage | result |
-|---|---|
-| Baseline reproduction (seatbelt) | ✅ POMO TSP-100 reproduced: greedy 0.97 %, ×8-aug 0.149 % (vs published 1.07 % / 0.14 %) |
-| Hilbert serialization unit tests | ✅ 7/7 (adjacency on 8×8–32×32, bijection, locality) |
-| Mamba kernel mechanism gate | ✅ kernel vs pure-PyTorch max\|Δ\| 1.1e-5 < 1e-3 |
-| Param match (attention vs mamba) | ✅ 1,269,760 vs 1,249,792 (1.57 %) |
-| Calibration (60k steps, 1 seed) | 🟢 running — must show attention ≤ 2–3 % single-traj greedy before the ≥3-seed sweep |
+Optimality gap vs LKH-3 on 1000 held-out TSP-100 instances, single-trajectory (multistart),
+identical POMO REINFORCE + decoder, matched params. Full scoring:
+[`results/gate0/incoming/WAVE_ANALYSIS.md`](results/gate0/incoming/WAVE_ANALYSIS.md).
 
-Judged metric: **single-trajectory greedy gap**; PASS if mamba/hilbert ≤ attention + 1.0 %.
-See `results/gate0/` for committed reports and `docs/` for the agent spec + HPC notes.
+| encoder | @250k, 3 seeds | @500k converged, 3 seeds |
+|---|---|---|
+| Attention (baseline) | 2.95 (1.91) — s1 | 2.52 ± 0.07 (1.61 ± 0.02) |
+| Uni-Mamba / Hilbert (original candidate) | 7.50 ± 1.03 (3.64) — **killed** | — |
+| BiMamba / Hilbert | 5.57 ± 0.11 (1.94 ± 0.09 — parity) | 4.89 (1.54) — s1 |
+| **Hybrid: 4 BiMamba + 1 attention layer** | 4.37 ± 0.33 (**1.63 ± 0.10**) | 3.08 ± 0.06 (**1.14 ± 0.19**) |
+
+Key findings: the vanilla Hilbert+Mamba recipe fails for a diagnosable reason (short causal
+receptive field); pooled global channels don't fix it; bidirectionality reaches multistart
+parity and cuts seed variance 10×; **one exact attention layer beats the full attention
+encoder on multistart** (worst hybrid seed 1.365 < best attention seed 1.589). A locality
+prior helps only non-causal scans. All at N=100; the O(N) payoff at N≥1000 is future work.
+Pre-registered kill/decision rules: `docs/gate0_agent_spec.md` + `results/gate0/`. The
+earlier seatbelt still holds: official POMO checkpoint reproduced at 0.97 % greedy /
+0.149 % ×8-aug on our oracle before any experiment.
 
 ## Layout
 

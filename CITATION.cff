@@ -10,6 +10,7 @@ abstract: >-
 authors:
   - family-names: Aslam
     given-names: Umar
+    email: umaraslam66@hotmail.com
 repository-code: "https://github.com/Umaraslam66/serpentine"
 license: MIT
 version: 1.0.0

@@ -13,9 +13,33 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+
+% --- Page geometry: arXiv/NeurIPS-preprint margins ---
+\usepackage[letterpaper,margin=1in]{geometry}
+
+% --- Math and symbols ---
 \usepackage{amsmath,amssymb}
+
+% --- Typography: Times-like text + matching math, with microtype refinements ---
+\usepackage{newtxtext}
+\usepackage{newtxmath}
+\usepackage[protrusion=true,expansion=false,final]{microtype}
+\linespread{1.04}
+
+% --- Graphics, tables, floats ---
 \usepackage{graphicx}
 \usepackage{booktabs}
+\renewcommand{\arraystretch}{1.18}
+\usepackage[font=small,labelfont=bf,labelsep=period,skip=6pt]{caption}
+
+% --- Section heading styling (modest, no color) ---
+\usepackage{titlesec}
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection}{0.75em}{}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{0.6em}{}
+\titlespacing*{\section}{0pt}{2.4ex plus 1ex minus .2ex}{1.2ex plus .2ex}
+\titlespacing*{\subsection}{0pt}{2.0ex plus .8ex minus .2ex}{0.9ex plus .2ex}
+
+% --- References and links ---
 \usepackage{natbib}
 \usepackage{url}
 \usepackage{hyperref}
@@ -24,11 +48,16 @@
 
 \hypersetup{colorlinks=true, linkcolor=blue!50!black, citecolor=blue!50!black, urlcolor=blue!50!black}
 
+% --- Title-block spacing ---
+\renewcommand\Authfont{\normalsize\scshape}
+\renewcommand\Affilfont{\normalsize\itshape}
+\setlength{\affilsep}{0.6em}
+
 \newcommand{\pct}{\%}
 
 \title{When Mamba Needs Attention}
 
-\author{Umar Aslam\thanks{Independent Researcher. Correspondence: \texttt{aslamumar16@gmail.com}.}}
+\author{Umar Aslam\thanks{Independent Researcher. Correspondence: \texttt{umaraslam66@hotmail.com}.}}
 \affil{Independent Researcher}
 \date{}
 
@@ -236,6 +265,8 @@ coordinate (lexicographic) sort as ablation arms.
 \caption{Encoder configurations, matched in total parameters. The hybrid has the
 fewest parameters (4.5\pct{} below attention).}
 \label{tab:params}
+\small
+\setlength{\tabcolsep}{5pt}
 \begin{tabular}{lll r}
 \toprule
 Encoder & Layers & Serialization & Parameters \\
@@ -450,6 +481,7 @@ over LKH-3), single-trajectory with multistart in parentheses; mean\,$\pm$\,std
 over the noted seeds. Attention and multistart use no instance augmentation.
 Every hybrid seed's multistart is below attention's 1.91.}
 \label{tab:main}
+\setlength{\tabcolsep}{5pt}
 \begin{tabular}{ll cc}
 \toprule
 Encoder / order & Seeds & Single-traj (\pct{}) & Multistart (\pct{}) \\
@@ -479,6 +511,7 @@ the multistart eval-noise band is $\pm$0.05. The hybrid--attention multistart
 separation is three-seed on both sides: worst hybrid 1.365 vs best attention
 1.589.}
 \label{tab:conv}
+\setlength{\tabcolsep}{5pt}
 \begin{tabular}{ll cc}
 \toprule
 Encoder & Seeds & Single-traj (\pct{}) & Multistart (\pct{}) \\

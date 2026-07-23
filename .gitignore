@@ -25,3 +25,4 @@ POMO/
 results/*
 !results/.gitkeep
 !results/gate0/
+docs/compass_artifact_*
