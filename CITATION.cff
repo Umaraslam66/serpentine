@@ -31,4 +31,5 @@ preferred-citation:
     - family-names: Aslam
       given-names: Umar
   year: 2026
-  notes: "Preprint; DOI via Zenodo (see repository README for the current DOI badge)."
+  doi: 10.5281/zenodo.21517283
+  notes: "Preprint published on Zenodo. Code archived at 10.5281/zenodo.21517264."

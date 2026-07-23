@@ -6,7 +6,9 @@
 standard attention encoder on Euclidean TSP-100?**
 
 📄 **Paper:** *When Mamba Needs Attention* (Umar Aslam, 2026) — LaTeX source and PDF in
-[`paper/`](paper/). **Answer: not alone — but a hybrid with ONE attention layer beats the
+[`paper/`](paper/), published preprint DOI:
+[10.5281/zenodo.21517283](https://doi.org/10.5281/zenodo.21517283).
+**Answer: not alone — but a hybrid with ONE attention layer beats the
 attention baseline on multistart tour quality at 4.5 % fewer parameters.**
 
 A space-filling-curve serialization turns an unordered set of cities into a 1-D sequence; a
